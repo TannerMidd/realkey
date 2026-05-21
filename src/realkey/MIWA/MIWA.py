@@ -1,7 +1,6 @@
 from build123d import *
 
-from realkey.Common import key
-from realkey.Common import key_cutters
+from realkey.Common import key, key_cutters, svgtools
 
 
 class SR(key.Key):
@@ -101,11 +100,8 @@ class SR(key.Key):
             raise ValueError("Invalid keyway specified!")
 
         miwa_svg = import_svg("resources/MIWA/SR.svg", flip_y=False, label_by="inkscape:label")
-        profile_face = miwa_svg.filter_by(lambda shape: shape.label == "#profile_sr_" + profile)[0].faces()[0]
-        profile_face.position -= profile_face.bounding_box().min
-
-        keyway_face = miwa_svg.filter_by(lambda shape: shape.label == "#keyway_" + keyway)[0]
-        keyway_face.position -= keyway_face.bounding_box().center()
+        profile_face = svgtools.get_starting_at_origin(miwa_svg, "#profile_sr_" + profile)
+        keyway_face = svgtools.get_centered_around_origin(miwa_svg, "#keyway_" + keyway)
         keyway_face.translate((1, 0, 0))
 
         with BuildPart() as sr_blank:
@@ -125,7 +121,7 @@ class SR(key.Key):
     def key(cls, profile: str, keyway: str, bitting: str) -> Part:
         cls.validate_bitting(profile, keyway, bitting)
 
-        sr_blank = SR.blank(profile, keyway)
+        sr_blank = cls.blank(profile, keyway)
         mirror_plane = Plane.XZ.offset(-cls.SR_KEY_Y_DATUM - cls.SR_KEY_BLADE_HEIGHT / 2)
 
         cut_points: list[tuple[float, float]] = []
@@ -157,5 +153,5 @@ if __name__ == "__main__":
     # sr_blank = SR.blank("10cut", "sr")
     # export_step(sr_blank, "sr_blank.step")
     sr_key = SR.key("10cut", "sr", "1101203021")
-    export_step(sr_key, "sr_key.step")
-    # show_all()
+    # export_step(sr_key, "sr_key.step")
+    show_all()

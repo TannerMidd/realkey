@@ -8,7 +8,7 @@ display("Loaded!", target="status", append=False)
 
 
 # Mock build123d
-class Empty:
+class Empty[T]:
     pass
 
 
@@ -21,8 +21,11 @@ sys.modules["build123d"] = bogus123d
 bogus123d.MM = 1
 bogus123d.IN = 25.4
 bogus123d.THOU = 0.0254
-bogus123d.Part = None
-bogus123d.Sketch = None
+bogus123d.Part = Empty
+bogus123d.Sketch = Empty
+bogus123d.Wire = Empty
+bogus123d.Face = Empty
+bogus123d.ShapeList = Empty
 
 # Jump into realkey
 from realkey import realkey

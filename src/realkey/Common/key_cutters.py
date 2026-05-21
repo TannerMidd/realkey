@@ -9,7 +9,7 @@ def angled_cutter(cuts: list[tuple[float, float]], cut_root_width: float, neutra
         cuts (list[tuple[float, float]]): A list of cut centers, specified as (x, y)
         cut_root_width (float): The width of the flat spot or root of the cut
         neutral_y (float): The default neutral position for ramp in and ramp out, typically the Y value of the top of the key with a little cushion to close the shape.
-        max_cutter_width (float): A maximum width for the cutter, to make sure it doesnt go outside
+        max_cutter_width (float): A maximum width for the cutter, to make sure it doesnt extend too far outside the cutting region
         angle (float): The desired angle of all cuts, defined as the total angle of the cut, between two ramps
     """
     ha = angle / 2

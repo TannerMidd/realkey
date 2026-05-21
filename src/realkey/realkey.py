@@ -6,6 +6,7 @@ from js import Blob, navigator, URL, URLSearchParams, window
 import binascii, html, urllib.parse
 from realkey.Common import key
 from realkey.ASSA import ASSA
+from realkey.DOM import DOM
 from realkey.MIWA import MIWA
 from realkey.Opnus import Opnus
 from realkey.Paclock import Paclock

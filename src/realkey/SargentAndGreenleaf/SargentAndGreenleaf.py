@@ -178,6 +178,11 @@ class SGSDB(key.Key):
             
     @classmethod
     def blank(cls, profile: str, keyway: str) -> Part:
+        if profile not in cls.profiles():
+            raise ValueError("Invalid profile specified!")
+        if keyway not in cls.keyways():
+            raise ValueError("Invalid keyway specified!")
+        
         blank = None
         if profile == "60":
             with BuildPart() as step_blank:

@@ -1,7 +1,7 @@
 from build123d import *
 
-from realkey.Common import key
-
+from realkey.Common import key, svgtools
+from math import atan2
 
 class Desmo(key.Key):
     DESMO_KEY_BLADE_HEIGHT = 9.5 * MM
@@ -32,7 +32,7 @@ class Desmo(key.Key):
     @classmethod
     def keyways(cls) -> dict[str, str]:
         return {"desmo": "Desmo"}
-        
+
     @classmethod
     def basic_bitting_definition(cls) -> str:
         return (
@@ -68,11 +68,8 @@ class Desmo(key.Key):
             raise ValueError("Invalid keyway specified!")
 
         assa_svg = import_svg("resources/ASSA/Desmo.svg", flip_y=False, label_by="inkscape:label")
-        profile_face = assa_svg.filter_by(lambda shape: shape.label == "#profile_desmo_" + profile)[0].faces()[0]
-        profile_face.position -= profile_face.bounding_box().min
-
-        keyway_face = assa_svg.filter_by(lambda shape: shape.label == "#keyway_" + keyway)[0]
-        keyway_face.position -= keyway_face.bounding_box().center()
+        profile_face = svgtools.get_starting_at_origin(assa_svg, "#profile_desmo_" + profile)
+        keyway_face = svgtools.get_centered_around_origin(assa_svg, "#keyway_" + keyway)
         keyway_face = keyway_face.rotate(Axis.Z, -90)
 
         with BuildPart() as desmo_blank:
@@ -260,6 +257,6 @@ if __name__ == "__main__":
     # desmo_blank = Desmo.blank("8pin", "desmo")
     desmo_key = Desmo.key("8pin", "desmo", "24421322")
     # desmo_key = Desmo.key("6pin", "desmo", "632145")
-    export_step(desmo_key, "desmo_key.step")
+    # export_step(desmo_key, "desmo_key.step")
     # export_step(blank, "desmo_blank.step")
     show_all()

@@ -7,15 +7,22 @@ async def bootstrap(ocp_index="https://yeicor.github.io/OCP.wasm"):
     micropip.set_index_urls([ocp_index, "https://pypi.org/simple"])
 
     # Install the required packages.
-    await micropip.install(["ipython == 9.10.0", "build123d"])
+    await micropip.install(["ipython == 9.10.0", "build123d", "font-fetcher"])
 
 
 # Load the boot strap
 result = await bootstrap()
 
+from font_fetcher.ocp import install_ocp_font_hook
+from font_fetcher import fetch_font
+
+install_ocp_font_hook()
+fetch_font("Libre Baskerville", "Bold")
+
 import binascii
 from realkey.Common import key
 from realkey.ASSA import ASSA
+from realkey.DOM import DOM
 from realkey.MIWA import MIWA
 from realkey.Opnus import Opnus
 from realkey.Paclock import Paclock

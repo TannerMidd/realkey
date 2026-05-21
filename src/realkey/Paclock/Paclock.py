@@ -1,6 +1,6 @@
 from build123d import *
 
-from realkey.Common import key_cutters, key
+from realkey.Common import key_cutters, key, svgtools
 
 
 class PR1(key.Key):
@@ -58,27 +58,23 @@ class PR1(key.Key):
 
         paclock_svg = import_svg("resources/Paclock/PR1.svg", flip_y=False, label_by="inkscape:label")
 
-        blank_profile = paclock_svg.filter_by(lambda shape: shape.label == "#profile_" + profile)[0].faces()[0]
+        blank_profile = svgtools.get_starting_at_origin(paclock_svg, "#profile_" + profile)
         blank = extrude(blank_profile, cls.PR1_KEY_WIDTH)
-        blank.position -= blank.bounding_box().min
 
-        keyway_shape = paclock_svg.filter_by(lambda shape: shape.label == "#keyway_" + keyway)[0]
-        keyway_shape = keyway_shape.mirror(Plane.XZ)
-        keyway_shape = keyway_shape.mirror(Plane.YZ)
-        keyway_shape.position -= keyway_shape.bounding_box().min
-        outside_vertices = keyway_shape.vertices().filter_by_position(Axis.X, 0, 0) + keyway_shape.vertices().filter_by_position(Axis.X, 1.95, 2.05)
+        keyway_shape = svgtools.get_centered_around_origin(paclock_svg, "#keyway_" + keyway)
+        outside_vertices = keyway_shape.vertices().filter_by_position(Axis.X, -1.05, -0.95) + keyway_shape.vertices().filter_by_position(Axis.X, 0.95, 1.05)
         keyway_shape = fillet(outside_vertices, 0.2 * MM)
-
-        keyway_cutter = Rectangle(2.2 * MM, 7.6 * MM, 0, (Align.MIN, Align.MIN))
+        keyway_shape = keyway_shape.rotate(Axis.Z, 180)
+        
+        keyway_cutter = Rectangle(2.2 * MM, 7.6 * MM)
         keyway_cutter -= keyway_shape
-        keyway_cutter = offset(keyway_cutter, 0.005 * MM)
 
-        keyway_cutter = Sketch(Location((cls.PR1_KEY_X_DATUM, cls.PR1_KEY_Y_DATUM, cls.PR1_KEY_WIDTH), (0, 90, 0)) * keyway_cutter)
+        keyway_cutter = Sketch(Location((cls.PR1_KEY_X_DATUM, cls.PR1_KEY_Y_DATUM + 7.5 / 2 * MM, cls.PR1_KEY_WIDTH / 2), (0, 90, 0)) * keyway_cutter)
         keyway_cutter = extrude(keyway_cutter, 30 * MM)
 
         blank -= keyway_cutter
 
-        return Part(blank, "Paclock PR1 Key Blank")
+        return Part(blank)
 
     @classmethod
     def key(cls, profile: str, keyway: str, bitting: str) -> Part:
@@ -95,7 +91,7 @@ class PR1(key.Key):
 
             cuts.append((cut_x, cut_y))
 
-        cutter = key_cutters.angled_cutter(cuts, cls.PR1_KEY_CUT_WIDTH, 16.5, 0.25 * IN, 90)
+        cutter = key_cutters.angled_cutter(cuts, cls.PR1_KEY_CUT_WIDTH, 16.6, 0.25 * IN, 90)
 
         with BuildPart() as pr1_key:
             add(pr1_blank)
@@ -103,14 +99,13 @@ class PR1(key.Key):
             with BuildSketch() as pr1_cutter:
                 add(cutter)
             extrude(amount=cls.PR1_KEY_WIDTH * 2, mode=Mode.SUBTRACT)
-        show_all()
         return Part(pr1_key.part)
 
 
 if __name__ == "__main__":
     from ocp_vscode import *
 
-    # blank = SG44XXGuard.blank("87h", "lever")
+    #blank = PR1.blank("pro", "pr1")
+    #export_step(blank, "pr1_blank.step")
     key = PR1.key("pro", "pr1", "6262626")
-    # show_all()
-    # export_step(key, "guard_key.step")
+    show_all()

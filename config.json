@@ -1,39 +1,36 @@
 {
     "name": "realkey",
-    "packages": ["micropip"],
+    "packages": [
+        "micropip"
+    ],
     "js_modules": {
         "main": {
-            "key3d.js" : "key3d"
+            "key3d.js": "key3d"
         }
     },
     "files": {
         "{PATH}": "./src/realkey",
         "{FROM}": "{PATH}",
         "{TO}": "./realkey",
-
-        "{FROM}/realkey.py" : "{TO}/realkey.py",
-
-        "{FROM}/Common/key_cutters.py" : "{TO}/Common/key_cutters.py",
-        "{FROM}/Common/key.py" : "{TO}/Common/key.py",
-        
-        "{FROM}/ASSA/ASSA.py" : "{TO}/ASSA/ASSA.py",
-
-        "{FROM}/MIWA/MIWA.py" : "{TO}/MIWA/MIWA.py",
-
-        "{FROM}/Opnus/Opnus.py" : "{TO}/Opnus/Opnus.py",
-
-        "{FROM}/Paclock/Paclock.py" : "{TO}/Paclock/Paclock.py",
-
-        "{FROM}/SargentAndGreenleaf/SargentAndGreenleaf.py" : "{TO}/SargentAndGreenleaf/SargentAndGreenleaf.py",
-
+        "{FROM}/realkey.py": "{TO}/realkey.py",
+        "{FROM}/Common/key_cutters.py": "{TO}/Common/key_cutters.py",
+        "{FROM}/Common/key.py": "{TO}/Common/key.py",
+        "{FROM}/Common/svgtools.py": "{TO}/Common/svgtools.py",
+        "{FROM}/ASSA/ASSA.py": "{TO}/ASSA/ASSA.py",
+        "{FROM}/DOM/DOM.py": "{TO}/DOM/DOM.py",
+        "{FROM}/MIWA/MIWA.py": "{TO}/MIWA/MIWA.py",
+        "{FROM}/Opnus/Opnus.py": "{TO}/Opnus/Opnus.py",
+        "{FROM}/Paclock/Paclock.py": "{TO}/Paclock/Paclock.py",
+        "{FROM}/SargentAndGreenleaf/SargentAndGreenleaf.py": "{TO}/SargentAndGreenleaf/SargentAndGreenleaf.py",
+        "resources/ASSA/Desmo.svg": "resources/ASSA/Desmo.svg",
+        "resources/DOM/SystemD.svg": "resources/DOM/SystemD.svg",
+        "resources/MIWA/SR.svg": "resources/MIWA/SR.svg",
+        "resources/Opnus/Memolis.svg": "resources/Opnus/Memolis.svg",
+        "resources/Paclock/PR1.svg": "resources/Paclock/PR1.svg",
         "resources/SargentAndGreenleaf/60.step": "resources/SargentAndGreenleaf/60.step",
         "resources/SargentAndGreenleaf/87H.step": "resources/SargentAndGreenleaf/87H.step",
         "resources/SargentAndGreenleaf/96.step": "resources/SargentAndGreenleaf/96.step",
         "resources/SargentAndGreenleaf/9609.step": "resources/SargentAndGreenleaf/9609.step",
-        "resources/SargentAndGreenleaf/SY3B.step": "resources/SargentAndGreenleaf/SY3B.step",
-        "resources/ASSA/Desmo.svg" : "resources/ASSA/Desmo.svg",
-        "resources/MIWA/SR.svg" : "resources/MIWA/SR.svg",
-        "resources/Opnus/Memolis.svg" : "resources/Opnus/Memolis.svg",
-        "resources/Paclock/PR1.svg" : "resources/Paclock/PR1.svg"
+        "resources/SargentAndGreenleaf/SY3B.step": "resources/SargentAndGreenleaf/SY3B.step"
     }
 }

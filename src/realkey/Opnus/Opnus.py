@@ -2,7 +2,7 @@ from math import atan2, sqrt, pi
 
 from build123d import *
 
-from realkey.Common import key
+from realkey.Common import key, svgtools
 
 
 class Memolis(key.Key):
@@ -69,13 +69,9 @@ class Memolis(key.Key):
             raise ValueError("Invalid keyway specified!")
 
         opnus_svg = import_svg("resources/Opnus/Memolis.svg", flip_y=False, label_by="inkscape:label")
-        profile_face = opnus_svg.filter_by(lambda shape: shape.label == "#profile_" + profile)[0].faces()[0]
-        profile_face.position -= profile_face.bounding_box().min
-
-        keyway_face = opnus_svg.filter_by(lambda shape: shape.label == "#keyway_" + keyway)[0]
-        keyway_face.position -= keyway_face.bounding_box().center()
+        profile_face = svgtools.get_starting_at_origin(opnus_svg, "#profile_" + profile)
+        keyway_face = svgtools.get_centered_around_origin(opnus_svg, "#keyway_" + keyway)
         keyway_face = keyway_face.mirror(Plane.XZ)
-        # keyway_face = keyway_face.rotate(Axis.Z, -90)
 
         with BuildPart() as memolis_blank:
             with BuildSketch():
