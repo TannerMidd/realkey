@@ -71,7 +71,6 @@ async function loadStl(file) {
     return new THREE.Mesh(geometry, brassMaterial)
 }
 
-// global function allowing outside methods to export
 export async function loadKey(file) {
     renderGroup.remove(key)
     if ("geometry" in key)

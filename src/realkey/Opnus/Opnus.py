@@ -2,7 +2,7 @@ from math import atan2, sqrt, pi
 
 from build123d import *
 
-from realkey.Common import key, svgtools
+from realkey.Common import key, resource_fetcher, svgtools
 
 
 class Memolis(key.Key):
@@ -67,6 +67,9 @@ class Memolis(key.Key):
             raise ValueError("Invalid profile specified!")
         if keyway not in cls.keyways():
             raise ValueError("Invalid keyway specified!")
+        
+        if not resource_fetcher.pre_fetch_resource("resources/Opnus/Memolis.svg"):
+            raise ValueError("Unable to load Opnus Memolis SVG")
 
         opnus_svg = import_svg("resources/Opnus/Memolis.svg", flip_y=False, label_by="inkscape:label")
         profile_face = svgtools.get_starting_at_origin(opnus_svg, "#profile_" + profile)

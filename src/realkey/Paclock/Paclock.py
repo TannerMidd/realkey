@@ -1,6 +1,6 @@
 from build123d import *
 
-from realkey.Common import key_cutters, key, svgtools
+from realkey.Common import key_cutters, key, resource_fetcher, svgtools
 
 
 class PR1(key.Key):
@@ -56,6 +56,9 @@ class PR1(key.Key):
         if keyway not in cls.keyways():
             raise ValueError("Invalid keyway specified!")
 
+        if not resource_fetcher.pre_fetch_resource("resources/Paclock/PR1.svg"):
+                raise ValueError("Unable to load Paclock SVG")
+        
         paclock_svg = import_svg("resources/Paclock/PR1.svg", flip_y=False, label_by="inkscape:label")
 
         blank_profile = svgtools.get_starting_at_origin(paclock_svg, "#profile_" + profile)

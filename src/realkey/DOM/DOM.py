@@ -1,6 +1,6 @@
 from build123d import *
 
-from realkey.Common import key, key_cutters, svgtools
+from realkey.Common import key, key_cutters, resource_fetcher, svgtools
 
 
 class SystemD(key.Key):
@@ -65,71 +65,81 @@ class SystemD(key.Key):
         if keyway not in cls.keyways():
             raise ValueError("Invalid keyway specified!")
 
-        dom_svg = import_svg("resources/DOM/SystemD.svg", label_by="inkscape:label")
-        blank_profile = svgtools.get_starting_at_origin(dom_svg, "#profile")
-        blade_profile, bow_profile = split(blank_profile, bisect_by=Plane.YZ.offset(cls.SD_X_DATUM), keep=Keep.BOTH)
-        bow_inset_profile = svgtools.get_starting_at_origin(dom_svg, "#inset_bow")
-        keyway_face = svgtools.get_centered_around_origin(dom_svg, "#keyway")
-        dom_logo = svgtools.get_group_centered_around_origin(dom_svg, "#dom_logo")
-        for i, shape in enumerate(dom_logo):
-            dom_logo[i] = shape.rotate(Axis.Z, 90)
+        if keyway == "1":
+            if not resource_fetcher.pre_fetch_resource("resources/DOM/SystemD_B1.step"):
+                raise ValueError("Unable to load DOM Keyway 1 blank")
+            with BuildPart() as step_blank:
+                add(import_step("resources/DOM/SystemD_B1.step"))
+            blank = step_blank.part
+        else:
+            if not resource_fetcher.pre_fetch_resource("resources/DOM/SystemD.svg"):
+                raise ValueError("Unable to load DOM SVG")
 
-        system_text = Text("System", 2.75, "Libre Baskerville", font_style=FontStyle.BOLD)
-        system_text = system_text.rotate(Axis.Z, 90)
-        d_text = Text("D", 2.75, "Libre Baskerville", font_style=FontStyle.BOLD)
-        d_text = d_text.rotate(Axis.Z, 90)
+            dom_svg = import_svg("resources/DOM/SystemD.svg", label_by="inkscape:label")
+            blank_profile = svgtools.get_starting_at_origin(dom_svg, "#profile")
+            blade_profile, bow_profile = split(blank_profile, bisect_by=Plane.YZ.offset(cls.SD_X_DATUM), keep=Keep.BOTH)
+            bow_inset_profile = svgtools.get_starting_at_origin(dom_svg, "#inset_bow")
+            keyway_face = svgtools.get_centered_around_origin(dom_svg, "#keyway")
+            dom_logo = svgtools.get_group_centered_around_origin(dom_svg, "#dom_logo")
+            for i, shape in enumerate(dom_logo):
+                dom_logo[i] = shape.rotate(Axis.Z, 90)
+            system_text = svgtools.get_group_centered_around_origin(dom_svg, "#system")
+            for i, shape in enumerate(system_text):
+                system_text[i] = shape.rotate(Axis.Z, 90)
 
-        if not isinstance(bow_profile, Face):
-            raise ValueError("Bow sucks")
-        if not isinstance(blade_profile, Face):
-            raise ValueError("Blade sucks")
+            d_text = svgtools.get_centered_around_origin(dom_svg, "#d")
+            d_text = d_text.rotate(Axis.Z, 90)
 
-        with BuildPart() as blank:
-            with BuildSketch():
-                add(bow_profile)
-            extrude(amount=cls.SD_BOW_WIDTH)
-            with BuildSketch():
-                with Locations((0.4 * MM, 0.4 * MM)):
-                    add(bow_inset_profile)
-            extrude(amount=0.2 * MM, mode=Mode.SUBTRACT)
-            with BuildSketch(Plane.XY.offset(cls.SD_BOW_WIDTH)):
-                with Locations((0.4 * MM, 0.4 * MM)):
-                    add(bow_inset_profile)
-            extrude(amount=-0.2 * MM, mode=Mode.SUBTRACT)
-            with BuildSketch(Plane.XY.offset(cls.SD_BOW_WIDTH - 0.2 * MM)):
-                with Locations((13 * MM, 14.5 * MM)):
-                    add(dom_logo)
-                with Locations((8.75 * MM, 7.5 * MM)):
-                    add(system_text)
-                with Locations((15 * MM, 22 * MM)):
-                    Circle(1.6 * MM)
-                    Circle(1.4 * MM, mode=Mode.SUBTRACT)
-                    with Locations((0.25 * MM, 0.125 * MM)):
-                        add(d_text)
+            if not isinstance(bow_profile, Face):
+                raise ValueError("Bow sucks")
+            if not isinstance(blade_profile, Face):
+                raise ValueError("Blade sucks")
 
-            extrude(amount=0.2 * MM)
-            with BuildSketch() as bp:
-                add(blade_profile)
-            extrude(amount=cls.SD_KEY_WIDTH / 2 + cls.SD_BOW_WIDTH / 2)
-            extrude(bp.sketch, amount=cls.SD_BOW_WIDTH / 2 - cls.SD_KEY_WIDTH / 2)
-            with BuildSketch(Plane.ZY.offset(-cls.SD_X_DATUM)) as key_cutter:
-                with Locations((cls.SD_BOW_WIDTH / 2, cls.SD_Y_DATUM + cls.SD_KEY_HEIGHT / 2)):
-                    Rectangle(cls.SD_KEY_WIDTH, cls.SD_KEY_HEIGHT * 2)
-                    add(keyway_face, mode=Mode.SUBTRACT)
-            extrude(amount=-50 * MM, mode=Mode.SUBTRACT)
+            with BuildPart() as blank:
+                with BuildSketch():
+                    add(bow_profile)
+                extrude(amount=cls.SD_BOW_WIDTH)
+                with BuildSketch():
+                    with Locations((0.4 * MM, 0.4 * MM)):
+                        add(bow_inset_profile)
+                extrude(amount=0.2 * MM, mode=Mode.SUBTRACT)
+                with BuildSketch(Plane.XY.offset(cls.SD_BOW_WIDTH)):
+                    with Locations((0.4 * MM, 0.4 * MM)):
+                        add(bow_inset_profile)
+                extrude(amount=-0.2 * MM, mode=Mode.SUBTRACT)
+                with BuildSketch(Plane.XY.offset(cls.SD_BOW_WIDTH - 0.2 * MM)):
+                    with Locations((13 * MM, 14.5 * MM)):
+                        add(dom_logo)
+                    with Locations((8.75 * MM, 7.5 * MM)):
+                        add(system_text)
+                    with Locations((15 * MM, 22 * MM)):
+                        Circle(1.6 * MM)
+                        Circle(1.3 * MM, mode=Mode.SUBTRACT)
+                        with Locations((0, 0.125 * MM)):
+                            add(d_text)
+                extrude(amount=0.2 * MM)
+                with BuildSketch() as bp:
+                    add(blade_profile)
+                extrude(amount=cls.SD_KEY_WIDTH / 2 + cls.SD_BOW_WIDTH / 2)
+                extrude(bp.sketch, amount=cls.SD_BOW_WIDTH / 2 - cls.SD_KEY_WIDTH / 2)
+                with BuildSketch(Plane.ZY.offset(-cls.SD_X_DATUM)) as key_cutter:
+                    with Locations((cls.SD_BOW_WIDTH / 2, cls.SD_Y_DATUM + cls.SD_KEY_HEIGHT / 2)):
+                        Rectangle(cls.SD_KEY_WIDTH, cls.SD_KEY_HEIGHT * 2)
+                        add(keyway_face, mode=Mode.SUBTRACT)
+                extrude(amount=-50 * MM, mode=Mode.SUBTRACT)
 
-            new_faces = blank.faces().filter_by(Plane.YZ)
-            extrude(new_faces.faces()[0], amount=8 * MM, dir=(-0.6, 0, 0.2))
-            extrude(new_faces.faces()[0], amount=4 * MM, dir=(-0.6, 0, 0.6))
-            extrude(new_faces.faces()[0], amount=2 * MM, dir=(-0.6, 0, 0.9))
-            extrude(new_faces.faces()[4], amount=8 * MM, dir=(-0.6, 0, -0.2))
-            extrude(new_faces.faces()[4], amount=4 * MM, dir=(-0.6, 0, -0.6))
-            extrude(new_faces.faces()[4], amount=2 * MM, dir=(-0.6, 0, -0.9))
+                new_faces = blank.faces().filter_by(Plane.YZ)
+                extrude(new_faces.faces()[0], amount=8 * MM, dir=(-0.6, 0, 0.2))
+                extrude(new_faces.faces()[0], amount=4 * MM, dir=(-0.6, 0, 0.6))
+                extrude(new_faces.faces()[0], amount=2 * MM, dir=(-0.6, 0, 0.9))
+                extrude(new_faces.faces()[4], amount=8 * MM, dir=(-0.6, 0, -0.2))
+                extrude(new_faces.faces()[4], amount=4 * MM, dir=(-0.6, 0, -0.6))
+                extrude(new_faces.faces()[4], amount=2 * MM, dir=(-0.6, 0, -0.9))
+                blank = blank.part
 
-        if blank.part is None:
+        if blank is None:
             raise ValueError("Unable to build blank")
-
-        return blank.part
+        return blank
 
     @classmethod
     def key(cls, profile: str, keyway: str, bitting: str) -> Part:
@@ -182,8 +192,8 @@ class SystemD(key.Key):
 if __name__ == "__main__":
     from ocp_vscode import *
 
-    # blank = SystemD.blank("basic", "1")
-    # export_step(blank, "dom_system_d.step")
-    key = SystemD.key("basic", "1", "5233342424")
+    blank = SystemD.blank("basic", "1")
+    # export_step(blank, "SystemD_B1.step")
+    # key = SystemD.key("basic", "1", "5233342424")
     # export_step(key, "dom_system_d.step")
     show_all()

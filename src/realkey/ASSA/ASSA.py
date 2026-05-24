@@ -1,7 +1,6 @@
 from build123d import *
 
-from realkey.Common import key, svgtools
-from math import atan2
+from realkey.Common import key, resource_fetcher, svgtools
 
 class Desmo(key.Key):
     DESMO_KEY_BLADE_HEIGHT = 9.5 * MM
@@ -67,6 +66,8 @@ class Desmo(key.Key):
         if keyway not in cls.keyways():
             raise ValueError("Invalid keyway specified!")
 
+        if not resource_fetcher.pre_fetch_resource("resources/ASSA/Desmo.svg"):
+            raise ValueError("Unable to load ASSA Desmo SVG")
         assa_svg = import_svg("resources/ASSA/Desmo.svg", flip_y=False, label_by="inkscape:label")
         profile_face = svgtools.get_starting_at_origin(assa_svg, "#profile_desmo_" + profile)
         keyway_face = svgtools.get_centered_around_origin(assa_svg, "#keyway_" + keyway)

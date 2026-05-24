@@ -1,6 +1,6 @@
 from build123d import *
 
-from realkey.Common import key_cutters, key
+from realkey.Common import key_cutters, key, resource_fetcher
 
 
 class SGSDB(key.Key):
@@ -185,22 +185,32 @@ class SGSDB(key.Key):
         
         blank = None
         if profile == "60":
+            if not resource_fetcher.pre_fetch_resource("resources/SargentAndGreenleaf/60.step"):
+                raise ValueError("Unable to load S&G 60 Blank")
             with BuildPart() as step_blank:
                 add(import_step("resources/SargentAndGreenleaf/60.step"))
             blank = step_blank.part
         elif profile in ["87h", "87h_7cut"]:
+            if not resource_fetcher.pre_fetch_resource("resources/SargentAndGreenleaf/87H.step"):
+                raise ValueError("Unable to load S&G 87H Blank")
             with BuildPart() as step_blank:
                 add(import_step("resources/SargentAndGreenleaf/87H.step"))
             blank = step_blank.part
         elif profile in ["96", "96_7cut"]:
+            if not resource_fetcher.pre_fetch_resource("resources/SargentAndGreenleaf/96.step"):
+                raise ValueError("Unable to load S&G 96 Blank")
             with BuildPart() as step_blank:
                 add(import_step("resources/SargentAndGreenleaf/96.step"))
             blank = step_blank.part
         elif profile == "9609":
+            if not resource_fetcher.pre_fetch_resource("resources/SargentAndGreenleaf/9609.step"):
+                raise ValueError("Unable to load S&G 9609 Blank")
             with BuildPart() as step_blank:
                 add(import_step("resources/SargentAndGreenleaf/9609.step"))
             blank = step_blank.part
         elif profile == "sy3b":
+            if not resource_fetcher.pre_fetch_resource("resources/SargentAndGreenleaf/SY3B.step"):
+                raise ValueError("Unable to load S&G SY3B Blank")
             with BuildPart() as step_blank:
                 add(import_step("resources/SargentAndGreenleaf/SY3B.step"))
             blank = step_blank.part

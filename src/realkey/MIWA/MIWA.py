@@ -1,6 +1,6 @@
 from build123d import *
 
-from realkey.Common import key, key_cutters, svgtools
+from realkey.Common import key, key_cutters, resource_fetcher, svgtools
 
 
 class SR(key.Key):
@@ -99,6 +99,8 @@ class SR(key.Key):
         if keyway not in cls.keyways():
             raise ValueError("Invalid keyway specified!")
 
+        if not resource_fetcher.pre_fetch_resource("resources/MIWA/SR.svg"):
+            raise ValueError("Unable to load MIWA SR SVG")
         miwa_svg = import_svg("resources/MIWA/SR.svg", flip_y=False, label_by="inkscape:label")
         profile_face = svgtools.get_starting_at_origin(miwa_svg, "#profile_sr_" + profile)
         keyway_face = svgtools.get_centered_around_origin(miwa_svg, "#keyway_" + keyway)

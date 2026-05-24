@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,7 +13,8 @@
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
 
     <link rel="stylesheet" href="https://fonts.bunny.net/css?family=alexandria:400" crossorigin>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+        type="text/css">
     <link rel="stylesheet" href="https://pyscript.net/releases/2026.3.1/core.css" type="text/css">
 
     <link rel="stylesheet" href="main.css" type="text/css">
@@ -30,6 +32,7 @@
     <script type="py" src="main.py" config="config-no-pkg.json"></script>
     <script type="py" worker name="keygen" src="worker.py" config="config.json"></script>
 </head>
+
 <body>
     <div id="loader">
         <div id="status">
@@ -40,36 +43,38 @@
         <div id="header">
             <h1 id="header-text">realkey</h1>
             <div id="header-right">
-                <button class="info-button" popovertarget="about-dialog" title="About realkey"><i class="fa-regular fa-circle-question"></i></button>
+                <button class="info-button" popovertarget="about-dialog" title="About realkey"><i
+                        class="fa-regular fa-circle-question"></i></button>
             </div>
         </div>
         <div id="main">
             <div id="left-sidebar">
                 <p>
-                    <label for="key-select">Key</label><br/>
+                    <label for="key-select">Key</label><br />
                     <select id="key-select" disabled>
                         <option>No keys loaded...</option>
                     </select>
                 </p>
                 <p>
-                    <label for="profile-select">Profile</label><br/>
+                    <label for="profile-select">Profile</label><br />
                     <select id="profile-select" disabled>
                         <option>No profiles loaded...</option>
                     </select>
                 </p>
                 <p>
-                    <label for="keyway-select">Keyway</label><br/>
+                    <label for="keyway-select">Keyway</label><br />
                     <select id="keyway-select" disabled>
                         <option>No keyways loaded...</option>
                     </select>
                 </p>
                 <p>
-                    <div id="bitting-instructions"></div>
-                    <button id="show-advanced" class="info-button hide" popovertarget="advanced-bitting-dialog"><i class="fa-regular fa-circle-question"></i>Advanced</button>
+                <div id="bitting-instructions"></div>
+                <button id="show-advanced" class="info-button hide" popovertarget="advanced-bitting-dialog"><i
+                        class="fa-regular fa-circle-question"></i>Advanced</button>
                 </p>
                 <p>
-                    <label for="bitting">Bitting:</label><br/>
-                    <input id="bitting" type="text" disabled/>
+                    <label for="bitting">Bitting:</label><br />
+                    <input id="bitting" type="text" disabled />
                 </p>
                 <div id="info"></div>
                 <p>
@@ -82,70 +87,81 @@
                     <span id="model-overlay"></span>
                 </div>
                 <p>
-                    <button id="save-stl" class="red-button" title="Download STL" disabled><i class="fa-solid fa-download"></i> STL</button>
-                    <button id="save-step" class="red-button" title="Download STEP" disabled><i class="fa-solid fa-download"></i> STEP</button>
-                    <button id="copy-link" class="green-button" title="Copy link" disabled><i class="fa-solid fa-link"></i></i></button>
+                    <button id="save-stl" class="red-button" title="Download STL" disabled><i
+                            class="fa-solid fa-download"></i> STL</button>
+                    <button id="save-step" class="red-button" title="Download STEP" disabled><i
+                            class="fa-solid fa-download"></i> STEP</button>
+                    <button id="copy-link" class="green-button" title="Copy link" disabled><i
+                            class="fa-solid fa-link"></i></i></button>
                 </p>
                 <div>
-                    <span style="height: 15px; font-size: 10px; color:#555">Left click to orbit, right click to pan, scrollwheel to zoom</span>
+                    <span style="height: 15px; font-size: 10px; color:#555">Left click to orbit, right click to pan,
+                        scrollwheel to zoom</span>
                 </div>
             </div>
         </div>
-        </div>
+    </div>
     </div>
     <dialog id="about-dialog" popover>
-        <div style="float: right;"><button class="info-button" popovertarget="about-dialog" popovertargetaction="hide"><i class="fa-solid fa-xmark"></i></button></div>
+        <div style="float: right;"><button class="info-button" popovertarget="about-dialog"
+                popovertargetaction="hide"><i class="fa-solid fa-xmark"></i></button></div>
         <div id="about-info" class="scrollable-dialog">
             <h2>About realkey</h2>
-            <p>realkey is a system for generating 3D models of keys that can be used for 3D printing keys.</a></p>
-            <p>realkey is powered at its core by <a href="https://build123d.readthedocs.io/en/latest/" target="_blank">build123d</a>, a code-based CAD system written in Python.</p>
-            <p>Many of the target locks have very high tolerances, to improve print quality, some recommended settings are available:
-                <details id="settings-detail">
-                    <summary><b>3D Printing Settings</b></summary>
-                    Good plastics for keys are rigid and wear resistant. If it's good for gears, it's good for keys!
-                    <p>Plastics:
-                    <ul>
-                        <li>Carbon Fiber Nylon</li>
-                        <li>Polycarbonate</li>
-                        <li>PETG</li>
-                        <li>PLA - Even PLA works well! It can be a little brittle however.</li>
-                    </ul>
-                    </p>
-                    <p>Settings:
-                    <ul>
-                        <li>Nozzle: 0.4mm</li>
-                        <li>Start with your printers HIGHEST DETAIL default, then adjust</li>
-                        <li>Layer Height: 0.08mm</li>
-                        <li>First Layer Height: 0.16mm - 0.20mm</li>
-                        <li>Top Surface Line Width: 0.32mm</li>
-                        <li>Walls Printing Order: Outer/Inner</li>
-                        <li>External Bridge Density: 107%</li>
-                        <li>Wall Loops: 3</li>
-                        <li>Top Shell Layers: 9</li>
-                        <li>Top Surface Pattern: Monotonic Line</li>
-                        <li>Infill: 100%</li>
-                        <li>Infill Pattern: Gyroid - <i>This probably does not matter!</i></li>
-                        <li>Outer Wall Speed: 50mm/s</li>
-                        <li>Inner Wall Speed: 80mm/s</li>
-                        <li>Bridge External Speed: 10mm/s</li>
-                        <li>Supports: <b>Enabled</b></li>
-                        <li>Ignore Small Overhangs: <b>Disabled</b></li>
-                        <li>Top Z Distance: 0.16mm-0.20mm</li>
-                        <li>Bottom Z Distance: 0.20mm</li>
-                    </ul>
-                    </p>
-                </details>
+            <p>realkey is a system for generating 3D models of keys that can be used for 3D printing keys. It runs entirely on your local browser!</a></p>
+            <p>realkey is powered at its core by <a href="https://build123d.readthedocs.io/en/latest/"
+                    target="_blank">build123d</a>, a code-based CAD system written in Python.</p>
+            <p>Many of the target locks have very high tolerances, to improve print quality, some recommended settings
+                are available:
+            <details id="settings-detail">
+                <summary><b>3D Printing Settings</b></summary>
+                Good plastics for keys are rigid and wear resistant. If it's good for gears, it's good for keys!
+                <p>Plastics:
+                <ul>
+                    <li>Carbon Fiber Nylon</li>
+                    <li>Polycarbonate</li>
+                    <li>PETG</li>
+                    <li>PLA - Even PLA works well! It can be a little brittle however.</li>
+                </ul>
+                </p>
+                <p>Settings:
+                <ul>
+                    <li>Nozzle: 0.4mm</li>
+                    <li>Start with your printers HIGHEST DETAIL default, then adjust</li>
+                    <li>Layer Height: 0.08mm</li>
+                    <li>First Layer Height: 0.16mm - 0.20mm</li>
+                    <li>Top Surface Line Width: 0.32mm</li>
+                    <li>Walls Printing Order: Outer/Inner</li>
+                    <li>External Bridge Density: 107%</li>
+                    <li>Wall Loops: 3</li>
+                    <li>Top Shell Layers: 9</li>
+                    <li>Top Surface Pattern: Monotonic Line</li>
+                    <li>Infill: 100%</li>
+                    <li>Infill Pattern: Gyroid - <i>This probably does not matter!</i></li>
+                    <li>Outer Wall Speed: 50mm/s</li>
+                    <li>Inner Wall Speed: 80mm/s</li>
+                    <li>Bridge External Speed: 10mm/s</li>
+                    <li>Supports: <b>Enabled</b></li>
+                    <li>Ignore Small Overhangs: <b>Disabled</b></li>
+                    <li>Top Z Distance: 0.16mm-0.20mm</li>
+                    <li>Bottom Z Distance: 0.20mm</li>
+                </ul>
+                </p>
+            </details>
             </p>
             <p>For more information, checkout the github page!</p>
-            <h2><a href="https://github.com/smgoldade/realkey" title="realkey GitHub" target="_blank"><i class="fa-brands fa-github"></i></a></h2>
+            <h2><a href="https://github.com/smgoldade/realkey" title="realkey GitHub" target="_blank"><i
+                        class="fa-brands fa-github"></i></a></h2>
         </div>
     </dialog>
     <dialog id="advanced-bitting-dialog" popover>
-        <div style="float: right;"><button class="info-button" popovertarget="advanced-bitting-dialog" popovertargetaction="hide" title="Get advanced bitting info"><i class="fa-solid fa-xmark"></i></button></div>
+        <div style="float: right;"><button class="info-button" popovertarget="advanced-bitting-dialog"
+                popovertargetaction="hide" title="Get advanced bitting info"><i class="fa-solid fa-xmark"></i></button>
+        </div>
         <div id="advanced-bitting-info" class="scrollable-dialog"></div>
     </dialog>
     <dialog id="share-dialog" popover>
-        
+
     </dialog>
 </body>
+
 </html>
