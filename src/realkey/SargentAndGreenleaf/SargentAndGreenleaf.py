@@ -117,7 +117,7 @@ class SGSDB(key.Key):
 
     @classmethod
     def basic_bitting_definition(cls) -> str:
-        return "Cuts: Amount depends on profile, from 5 to 7.<br>Depths: Maximum Lift 0 to Minimum Lift 7.<br>Example: <i>24622</i>"
+        return "Cuts: Amount depends on profile, from 5 to 7, from tip to bow.<br>Depths: Maximum Lift 0 to Minimum Lift 7.<br>Example: <i>24622</i>"
 
     @classmethod
     def advanced_bitting_definition(cls) -> str | None:
