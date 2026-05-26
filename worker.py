@@ -11,10 +11,10 @@ async def bootstrap(ocp_index="https://yeicor.github.io/OCP.wasm"):
 
 
 # Load the boot strap
-result = await bootstrap()
+await bootstrap()
 
 import binascii
-from realkey.Common import key
+from realkey.Common import key, resource_fetcher
 from realkey.ASSA import ASSA
 from realkey.DOM import DOM
 from realkey.MIWA import MIWA
@@ -43,4 +43,8 @@ def generate_key(key_tag: str, profile: str, keyway: str, bitting: str) -> dict[
         return {"error": f"{e}"}
 
 
-__export__ = ["generate_key"]
+def set_base_url(base_url: str):
+    resource_fetcher.set_base_url(base_url)
+
+
+__export__ = ["generate_key", "set_base_url"]

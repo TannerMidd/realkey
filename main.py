@@ -1,9 +1,10 @@
-from pyscript import display, workers
+from pyscript import display, window, workers
 import sys
 
 # Kick off key generating worker
 display("Loading key generation system...", target="status", append=False)
 keygen = await workers["keygen"]
+await keygen.set_base_url(window.location.origin)
 display("Loaded!", target="status", append=False)
 
 

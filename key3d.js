@@ -30,10 +30,18 @@ controls.cursorStyle = "grab"
 controls.enableDamping = true
 
 window.addEventListener("resize", () => {
-    camera.aspect = canvas.clientWidth / canvas.clientHeight
+    let w = canvas.clientWidth
+    let h = canvas.clientHeight
+    let dpr = window.devicePixelRatio
+
+    camera.aspect = w / h
     camera.updateProjectionMatrix()
 
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight)
+    renderer.setSize(w, h)
+    renderer.setPixelRatio(dpr)
+
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
 })
 
 var key = new THREE.Object3D()

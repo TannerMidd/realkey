@@ -25,6 +25,7 @@ save_stl: web.ElementCollection = web.page["save-stl"]
 save_step: web.ElementCollection = web.page["save-step"]
 copy_link: web.ElementCollection = web.page["copy-link"]
 info: web.ElementCollection = web.page["info"]
+model_description: web.ElementCollection = web.page["model-description"]
 model_overlay: web.ElementCollection = web.page["model-overlay"]
 advanced_bitting_info: web.ElementCollection = web.page["advanced-bitting-info"]
 
@@ -43,7 +44,20 @@ async def main(bg_keygen):
 
 def remove_loading():
     # defaults
-    global profile_select, keyway_select, show_advanced, bitting_instructions, bitting, generate, save_stl, save_step, copy_link, info, model_overlay, advanced_bitting_info
+    global \
+        profile_select, \
+        keyway_select, \
+        show_advanced, \
+        bitting_instructions, \
+        bitting, \
+        generate, \
+        save_stl, \
+        save_step, \
+        copy_link, \
+        info, \
+        model_description, \
+        model_overlay, \
+        advanced_bitting_info
 
     disable_element(key_select)
     disable_element(profile_select)
@@ -62,6 +76,7 @@ def remove_loading():
     advanced_bitting_info.innerHTML = ""
 
     key3d.loadKey("resources/realkey.stl")
+    model_description.innerHTML = "<i>Is this a real key?</i>"
     loader = web.page["loader"]
     loader.classes.add("hide")
 
@@ -127,10 +142,18 @@ def get_bitting() -> str:
     global bitting
     return str(bitting.value)
 
+def get_pretty_name() -> str:
+    global key_select, profile_select, keyway_select, bitting
+    kn = key_select.options.selected.innerHTML
+    pn = profile_select.options.selected.innerHTML
+    kwn = keyway_select.options.selected.innerHTML
+    bn = str(bitting.value)
+    return f"{kn} - {pn} - {kwn} - {bn}"
+
 
 @when("change", "#key-select")
 def load_profiles_and_keyways():
-    global profile_select, keyway_select, bitting_instructions, bitting, generate, info, model_overlay, save_stl, save_step, copy_link
+    global profile_select, keyway_select, bitting_instructions, bitting, generate, info, model_description, model_overlay, save_stl, save_step, copy_link
     selected_key = get_selected_key()
     info.innerHTML = ""
     model_overlay.innerHTML = ""
@@ -147,9 +170,6 @@ def load_profiles_and_keyways():
         disable_element(keyway_select)
         disable_element(bitting)
         disable_element(generate)
-        disable_element(save_stl)
-        disable_element(save_step)
-        disable_element(copy_link)
         return
 
     populate_select(profile_select, "", selected_key.profiles())
@@ -221,6 +241,7 @@ async def generate_key():
     key3d.loadKey(stl_url)
     URL.revokeObjectURL(stl_url)
     model_overlay.innerHTML = ""
+    model_description.innerHTML = get_pretty_name()
 
     enable_element(generate)
     enable_element(save_stl)

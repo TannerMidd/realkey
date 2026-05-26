@@ -19,7 +19,6 @@
 
     <link rel="stylesheet" href="main.css" type="text/css">
 
-    <script src="mini-coi.js"></script>
     <script type="importmap">
         {
             "imports": {
@@ -49,42 +48,49 @@
             </div>
         </div>
         <div id="main">
-            <div id="left-sidebar">
-                <p>
-                    <label for="key-select">Key</label><br />
-                    <select id="key-select" disabled>
-                        <option>No keys loaded...</option>
-                    </select>
-                </p>
-                <p>
-                    <label for="profile-select">Profile</label><br />
-                    <select id="profile-select" disabled>
-                        <option>No profiles loaded...</option>
-                    </select>
-                </p>
-                <p>
-                    <label for="keyway-select">Keyway</label><br />
-                    <select id="keyway-select" disabled>
-                        <option>No keyways loaded...</option>
-                    </select>
-                </p>
-                <p>
-                <div id="bitting-instructions"></div>
-                <button id="show-advanced" class="info-button hide" popovertarget="advanced-bitting-dialog"><i
-                        class="fa-regular fa-circle-question"></i>Advanced</button>
-                </p>
-                <p>
-                    <label for="bitting">Bitting:</label><br />
-                    <input id="bitting" type="text" disabled />
-                </p>
-                <div id="info"></div>
-                <p>
-                    <button id="generate" class="blue-button" disabled>Generate</button>
-                </p>
+            <div class="input-pane">
+                <div class="tab-select">
+                    <button id="key-tab" class="tablinks active" title="Key"><i class="fa-solid fa-key"></i></button>
+                </div>
+                <hr>
+                <div id="key-input" class="tab">
+                    <p>
+                        <label for="key-select">Key</label><br />
+                        <select id="key-select" disabled>
+                            <option>No keys loaded...</option>
+                        </select>
+                    </p>
+                    <p>
+                        <label for="profile-select">Profile</label><br />
+                        <select id="profile-select" disabled>
+                            <option>No profiles loaded...</option>
+                        </select>
+                    </p>
+                    <p>
+                        <label for="keyway-select">Keyway</label><br />
+                        <select id="keyway-select" disabled>
+                            <option>No keyways loaded...</option>
+                        </select>
+                    </p>
+                    <p>
+                    <div id="bitting-instructions"></div>
+                    <button id="show-advanced" class="info-button hide" popovertarget="advanced-bitting-dialog"><i
+                            class="fa-regular fa-circle-question"></i>Advanced</button>
+                    </p>
+                    <p>
+                        <label for="bitting">Bitting:</label><br />
+                        <input id="bitting" type="text" disabled />
+                    </p>
+                    <div id="info"></div>
+                    <p>
+                        <button id="generate" class="blue-button" disabled>Generate</button>
+                    </p>
+                </div>
             </div>
-            <div id="right">
+            <div class="view-pane">
                 <div id="model-view">
                     <canvas id="canvas"></canvas>
+                    <span id="model-description"></span>
                     <span id="model-overlay"></span>
                 </div>
                 <p>
