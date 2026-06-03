@@ -10,16 +10,17 @@
         "{FROM}": "{PATH}",
         "{TO}": "./realkey",
         "{FROM}/realkey.py": "{TO}/realkey.py",
-        "{FROM}/Common/geom_tools.py": "{TO}/Common/geom_tools.py",
-        "{FROM}/Common/key_cutters.py": "{TO}/Common/key_cutters.py",
-        "{FROM}/Common/key.py": "{TO}/Common/key.py",
-        "{FROM}/Common/resource_fetcher.py": "{TO}/Common/resource_fetcher.py",
-        "{FROM}/Common/svgtools.py": "{TO}/Common/svgtools.py",
-        "{FROM}/ASSA/ASSA.py": "{TO}/ASSA/ASSA.py",
-        "{FROM}/DOM/DOM.py": "{TO}/DOM/DOM.py",
-        "{FROM}/MIWA/MIWA.py": "{TO}/MIWA/MIWA.py",
-        "{FROM}/Opnus/Opnus.py": "{TO}/Opnus/Opnus.py",
-        "{FROM}/Paclock/Paclock.py": "{TO}/Paclock/Paclock.py",
-        "{FROM}/SargentAndGreenleaf/SargentAndGreenleaf.py": "{TO}/SargentAndGreenleaf/SargentAndGreenleaf.py"
+        "{FROM}/geom_tools.py": "{TO}/geom_tools.py",
+        "{FROM}/key_cutters.py": "{TO}/key_cutters.py",
+        "{FROM}/key.py": "{TO}/key.py",
+        "{FROM}/resource_fetcher.py": "{TO}/resource_fetcher.py",
+        "{FROM}/svgtools.py": "{TO}/svgtools.py",
+        "{FROM}/web_core.py": "{TO}/web_core.py",
+        "{FROM}/ASSA.py": "{TO}/ASSA.py",
+        "{FROM}/DOM.py": "{TO}/DOM.py",
+        "{FROM}/MIWA.py": "{TO}/MIWA.py",
+        "{FROM}/Opnus.py": "{TO}/Opnus.py",
+        "{FROM}/Paclock.py": "{TO}/Paclock.py",
+        "{FROM}/SargentAndGreenleaf.py": "{TO}/SargentAndGreenleaf.py"
     }
 }

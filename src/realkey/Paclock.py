@@ -1,6 +1,6 @@
 from build123d import *
 
-from realkey.Common import key_cutters, key, resource_fetcher, svgtools
+from realkey import key, key_cutters, resource_fetcher, svgtools
 
 
 class PR1(key.Key):
@@ -57,8 +57,8 @@ class PR1(key.Key):
             raise ValueError("Invalid keyway specified!")
 
         if not resource_fetcher.pre_fetch_resource("resources/Paclock/PR1.svg"):
-                raise ValueError("Unable to load Paclock SVG")
-        
+            raise ValueError("Unable to load Paclock SVG")
+
         paclock_svg = import_svg("resources/Paclock/PR1.svg", flip_y=False, label_by="inkscape:label")
 
         blank_profile = svgtools.get_starting_at_origin(paclock_svg, "#profile_" + profile)
@@ -68,7 +68,7 @@ class PR1(key.Key):
         outside_vertices = keyway_shape.vertices().filter_by_position(Axis.X, -1.05, -0.95) + keyway_shape.vertices().filter_by_position(Axis.X, 0.95, 1.05)
         keyway_shape = fillet(outside_vertices, 0.2 * MM)
         keyway_shape = keyway_shape.rotate(Axis.Z, 180)
-        
+
         keyway_cutter = Rectangle(2.2 * MM, 7.6 * MM)
         keyway_cutter -= keyway_shape
 
@@ -108,7 +108,7 @@ class PR1(key.Key):
 if __name__ == "__main__":
     from ocp_vscode import *
 
-    #blank = PR1.blank("pro", "pr1")
-    #export_step(blank, "pr1_blank.step")
+    # blank = PR1.blank("pro", "pr1")
+    # export_step(blank, "pr1_blank.step")
     key = PR1.key("pro", "pr1", "6262626")
     show_all()

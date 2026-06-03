@@ -1,6 +1,7 @@
 from build123d import *
 
-from realkey.Common import key, resource_fetcher, svgtools
+from realkey import key, resource_fetcher, svgtools
+
 
 class Desmo(key.Key):
     DESMO_KEY_BLADE_HEIGHT = 9.5 * MM

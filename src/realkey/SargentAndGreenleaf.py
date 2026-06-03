@@ -1,6 +1,6 @@
 from build123d import *
 
-from realkey.Common import key_cutters, key, resource_fetcher
+from realkey import key, key_cutters, resource_fetcher
 
 
 class SGSDB(key.Key):
@@ -48,7 +48,7 @@ class SGSDB(key.Key):
         "96": 2.15 * IN,
         "96_7cut": 2.15 * IN,
         "9609": 2.145 * IN,
-        "sy3b": 2.15 * IN
+        "sy3b": 2.15 * IN,
     }
     SG_Y_DATUM = {
         "60": 0.380 * IN,
@@ -175,14 +175,14 @@ class SGSDB(key.Key):
         for cut in bitting:
             if int(cut) < 0 or int(cut) > 7:
                 raise ValueError("Cut depths must be from 0 to 7")
-            
+
     @classmethod
     def blank(cls, profile: str, keyway: str) -> Part:
         if profile not in cls.profiles():
             raise ValueError("Invalid profile specified!")
         if keyway not in cls.keyways():
             raise ValueError("Invalid keyway specified!")
-        
+
         blank = None
         if profile == "60":
             if not resource_fetcher.pre_fetch_resource("resources/SargentAndGreenleaf/60.step"):

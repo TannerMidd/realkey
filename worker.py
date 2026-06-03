@@ -14,21 +14,22 @@ async def bootstrap(ocp_index="https://yeicor.github.io/OCP.wasm"):
 await bootstrap()
 
 import binascii
-from realkey.Common import key, resource_fetcher
-from realkey.ASSA import ASSA
-from realkey.DOM import DOM
-from realkey.MIWA import MIWA
-from realkey.Opnus import Opnus
-from realkey.Paclock import Paclock
-from realkey.SargentAndGreenleaf import SargentAndGreenleaf
 from build123d import *
+from realkey import key, resource_fetcher, ASSA, DOM, MIWA, Opnus, Paclock, SargentAndGreenleaf
 
 
 def generate_key(key_tag: str, profile: str, keyway: str, bitting: str) -> dict[str, str]:
     key_class: key.Key = key.Key._list[key_tag]
 
     try:
-        generated_key = key_class.key(profile, keyway, bitting)
+        generated_key: Part | None = None
+        if len(bitting) == 0:
+            generated_key = key_class.blank(profile, keyway)
+        else:
+            generated_key = key_class.key(profile, keyway, bitting)
+        if generated_key is None:
+            return {"error": "No key or blank generated!"}
+
         export_stl(generated_key, "temp.stl")
         export_step(generated_key, "temp.step")
 

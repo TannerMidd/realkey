@@ -1,6 +1,6 @@
 from build123d import *
 
-from realkey.Common import key, key_cutters, resource_fetcher, svgtools
+from realkey import key, key_cutters, resource_fetcher, svgtools
 
 
 class SystemD(key.Key):
