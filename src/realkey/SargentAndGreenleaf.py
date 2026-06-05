@@ -67,7 +67,7 @@ class SGSDB(key.Key):
         "96": 1.1400 * IN,
         "96_7cut": 1.1400 * IN,
         "9609": 1.1400 * IN,
-        "sy3b": 1.1300 * IN,
+        "sy3b": 1.1000 * IN,
     }
     SG_THROAT_Y_DATUM = {
         "60": 0.305 * IN,
