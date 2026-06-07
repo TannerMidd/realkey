@@ -130,7 +130,7 @@ class EverestBlank:
                             (cls.EVEREST_X_DATUM + cls.EVEREST_PRIMUS_SIDEBAR_SPACINGS[3], cls.EVEREST_SIDEBAR_Y_DATUM - cls.EVEREST_PRIMUS_SIDEBAR_ROOT_DEPTHS[0]),
                             (cls.EVEREST_X_DATUM + cls.EVEREST_PRIMUS_SIDEBAR_SPACINGS[4], 16),
                             (cls.EVEREST_X_DATUM + SCHLAGE_CUT_SPACINGS[1], 16),
-                            (cls.EVEREST_X_DATUM + SCHLAGE_CUT_SPACINGS[2], cls.EVEREST_SIDEBAR_Y_DATUM - cls.EVEREST_PRIMUS_SIDEBAR_ROOT_DEPTHS[0])
+                            (cls.EVEREST_X_DATUM + SCHLAGE_CUT_SPACINGS[2], cls.EVEREST_SIDEBAR_Y_DATUM - cls.EVEREST_PRIMUS_SIDEBAR_ROOT_DEPTHS[0]),
                         )
                     make_face()
                 extrude(amount=cls.EVEREST_SIDEBAR_WIDTH - 0.001)
@@ -199,9 +199,9 @@ class Everest(key.Key, EverestBlank):
     @classmethod
     def basic_bitting_definition(cls) -> str:
         return (
-            "Cuts: Up to 6, defined from bow to tip.<br>"
-            "Depths: Maximum Lift 0 to Minimum Lift 9<br>"
-            "Example: <i>326163</i><br>"
+            "<b>Cuts:</b> Up to 6, defined from bow to tip.<br>"
+            "<b>Depths:</b> Maximum Lift 0 to Minimum Lift 9<br>"
+            "<b>Example:</b> <i>326163</i><br>"
             "<i>Make sure warding channels are clean after printing or key will be difficult to use!</i>"
         )
 
@@ -312,8 +312,9 @@ class EverestPrimus(key.Key, EverestBlank):
     @classmethod
     def basic_bitting_definition(cls) -> str:
         return (
-            "Cuts: Up to 6, defined from bow to tip. Sidebar up to 5, defined from bow to tip. Separate cuts with a space.<br>"
-            "Depths: Maximum Lift 0 to Minimum Lift 9, Sidebar 1 through 7<br>Example: <i>326163 23645</i><br>"
+            "<b>Cuts:</b> Up to 6, defined from bow to tip. Sidebar up to 5, defined from bow to tip.<br>"
+            "<i>Separate main cuts from sidebar with a space.</i><br>"
+            "<b>Depths:</b> Maximum Lift 0 to Minimum Lift 9, Sidebar 1 through 7<br><b>Example:</b> <i>326163 23645</i><br>"
             "<i>Make sure warding channels are clean after printing or key will be difficult to use!</i>"
         )
 
@@ -391,8 +392,8 @@ if __name__ == "__main__":
 
     # sb = EverestPrimus.blank("e29p_ctrl", "c124")
     # export_step(sb, "e29_blank.step")
-    #key = EverestPrimus.key("ep_6pin", "c124", "326163 23645")
-    #export_step(key, "ep_key.step")
+    # key = EverestPrimus.key("ep_6pin", "c124", "326163 23645")
+    # export_step(key, "ep_key.step")
     key = Everest.key("e29_6pin", "s123", "878587")
-    #export_step(key, "ep_key.step")
+    # export_step(key, "ep_key.step")
     show_all()

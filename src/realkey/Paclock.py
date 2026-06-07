@@ -30,7 +30,7 @@ class PR1(key.Key):
 
     @classmethod
     def basic_bitting_definition(cls) -> str:
-        return "Cuts: Up to 7, defined from bow to tip.<br>Depths: Maximum Lift 1 to Minimum Lift 6<br>Example: <i>6212121</i>"
+        return "<b>Cuts:</b> Up to 7, defined from bow to tip.<br><b>Depths:</b> Maximum Lift 1 to Minimum Lift 6<br><b>Example:</b> <i>6212121</i>"
 
     @classmethod
     def advanced_bitting_definition(cls) -> str | None:

@@ -36,9 +36,9 @@ class Desmo(key.Key):
     @classmethod
     def basic_bitting_definition(cls) -> str:
         return (
-            "Cuts: Up to 10, defined from bow to tip, right side before left.<br>"
-            "Depths: Maximum lift 1 to minimum lift 6<br>"
-            "Example: <i>145362 represents 145 on the right, 362 on the left</i>"
+            "<b>Cuts:</b> Up to 10, defined from bow to tip, right side before left.<br>"
+            "<b>Depths:</b> Maximum lift 1 to minimum lift 6<br>"
+            "<b>Example:</b> <i>145362 represents 145 on the right, 362 on the left</i>"
         )
 
     @classmethod

@@ -37,10 +37,10 @@ class Memolis(key.Key):
     @classmethod
     def basic_bitting_definition(cls) -> str:
         return (
-            "Cuts: Up to 14, defined from bow to tip, right side before left.<br>"
-            "Depths: Maximum lift 0 to minimum lift 5<br>"
+            "<b>Cuts:</b> Up to 14, defined from bow to tip, right side before left.<br>"
+            "<b>Depths:</b> Maximum lift 0 to minimum lift 5<br>"
             "On Memolis 2, any 0 cut will disable that lever on key change.<br>"
-            "Example: <i>40503325050251 represetns 4050332 on the right, 5050251 on the left</i>"
+            "<b>Example:</b> <i>40503325050251 represetns 4050332 on the right, 5050251 on the left</i>"
         )
 
     @classmethod

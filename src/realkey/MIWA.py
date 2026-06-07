@@ -34,11 +34,7 @@ class SR(key.Key):
 
     @classmethod
     def basic_bitting_definition(cls) -> str:
-        return (
-            "Cuts: Up to 10, defined from bow to tip.<br>"
-            "Depths: Maximum lift 0 to minimum lift 3<br>"
-            "Example: <i>1101203021</i>"
-        )
+        return "<b>Cuts:</b> Up to 10, defined from bow to tip.<br><b>Depths:</b> Maximum lift 0 to minimum lift 3<br><b>Example:</b> <i>1101203021</i>"
 
     @classmethod
     def advanced_bitting_definition(cls) -> str | None:
