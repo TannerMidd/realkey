@@ -19,7 +19,7 @@ class Memolis(key.Key):
     MEMOLIS_CUT_SURFACE_WIDTH = 1 * MM
 
     @classmethod
-    def name(cls) -> str:
+    def tag(cls) -> str:
         return "opnus_memolis"
 
     @classmethod

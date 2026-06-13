@@ -22,7 +22,7 @@ class SystemD(key.Key):
     SD_CUT_DEPTHS = [0.375 * MM, 0.875 * MM, 1.5 * MM, 1.875 * MM, 2.25 * MM]
 
     @classmethod
-    def name(cls) -> str:
+    def tag(cls) -> str:
         return "dom_system_d"
 
     @classmethod

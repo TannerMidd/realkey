@@ -13,7 +13,7 @@ class PR1(key.Key):
     PR1_KEY_CUT_WIDTH = 0.065 * IN
 
     @classmethod
-    def name(cls) -> str:
+    def tag(cls) -> str:
         return "paclock_pr1"
 
     @classmethod

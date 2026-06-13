@@ -45,7 +45,7 @@ def remove_loading():
     info.html = ""
     model_generating.html = ""
 
-    model_view.loadObject("resources/realkey.stl", 0.5, 0.95)
+    model_view.loadObject("resources/realkey.stl", 0.25, 0.95)
     model_description.html = "<i>Is this a real key?</i>"
     loader = web.page["loader"]
     loader.classes.add("hide")
@@ -57,12 +57,12 @@ async def apply_search_params():
     # legacy links, assume tab is key
     target_tab = "key"
     if "tab" in query_params:
-        target_tab = urllib.parse.unquote(query_params.get("tab"))
+        target_tab = urllib.parse.unquote(query_params["tab"])
 
     for key, tab in tabs.items():
         if key == target_tab:
-            tab.load_from_params(query_params)
             tab.show()
+            tab.load_from_params(query_params)
         else:
             tab.hide()
 
@@ -116,11 +116,13 @@ async def start_generation():
 
     roughness = data["roughness"] if "roughness" in data else 0.5
     metalness = data["metalness"] if "metalness" in data else 0.95
+    color = data["color"] if "color" in data else 0xE3BD7A
     description = data["description"] if "description" in data else "There is no key..."
 
     stl_url = URL.createObjectURL(stl_blob)
-    model_view.loadObject(stl_url, roughness, metalness)
+    model_view.loadObject(stl_url, roughness, metalness, color)
     URL.revokeObjectURL(stl_url)
+    info.html = ""
     model_generating.html = ""
     model_description.html = description
 

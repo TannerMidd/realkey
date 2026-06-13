@@ -16,7 +16,7 @@ For each key type, add a class that extends [Key](https://github.com/smgoldade/r
 All methods besides blank and key should NOT USE build123d or any other heavy library.
 
 Implement each method:
-- **name** - this defines an internal, non-user seen name used to tag the key family. Make it unique for your key, in snake_case. An example would be "miwa_sr" or "schlage_classic" and not "miwa" or "SchlageClassic".
+- **tag** - this defines an internal, non-user seen name used to tag the key family. Make it unique for your key, in snake_case. An example would be "miwa_sr" or "schlage_classic" and not "miwa" or "SchlageClassic".
 - **display_name** - this is the display name for the key type, shown to the user. E.g. "ASSA Desmo"
 - **profiles** - returns a dictionary of key profiles. The outer dictionary is profile groupings to an inner dictionary. A blank group displays no group. The inner dictionary keys are unique and used by your code to figure out which profile is requested, the value for the key is the display name for that profile. E.g. ```python {"Group Name" : {"6pin" : "6-Pin", "7pin" : "7-Pin"}} ```
 - **keyways** - returns a dictionary of keyways. The outer dictionary is keyway groupings to an inner dictionary. A blank group displays no group. The inner dictionary keys are unique and used by your code to figure out which keyway is selected, the value is the display name for that profile. ```python {"Group Name": {"c" : "C", "e" : "E"}} ```

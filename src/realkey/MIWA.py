@@ -17,7 +17,7 @@ class SR(key.Key):
     SR_CUT_ANGLE = 120
 
     @classmethod
-    def name(cls) -> str:
+    def tag(cls) -> str:
         return "miwa_sr"
 
     @classmethod

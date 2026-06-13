@@ -18,7 +18,7 @@ class Desmo(key.Key):
     DESMO_TRACK_TOLERANCE = 0.75 * MM
 
     @classmethod
-    def name(cls) -> str:
+    def tag(cls) -> str:
         return "assa_desmo"
 
     @classmethod

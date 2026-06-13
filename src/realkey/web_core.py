@@ -28,7 +28,7 @@ class Element:
 
     def _set_class_bool(self, class_name: str, value: bool):
         if value:
-            if not class_name in self._web_element.classes:
+            if class_name not in self._web_element.classes:
                 self._web_element.classes.add(class_name)
         else:
             self._web_element.classes.discard(class_name)  # type: ignore
@@ -155,6 +155,14 @@ class SelectElement(Element):
     @property
     def selected_value(self) -> str:
         return self.options.selected.value
+
+    @selected_value.setter
+    def selected_value(self, tag: str):
+        for option in self.options:
+            if tag == option.value:
+                option.selected = True
+                return
+        raise ValueError(f'No option with value "{tag}" in select')
 
     @property
     def selected_html(self) -> str:

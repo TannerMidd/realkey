@@ -110,7 +110,7 @@ class SGSDB(key.Key):
     }
 
     @classmethod
-    def name(cls) -> str:
+    def tag(cls) -> str:
         return "sg_sdb"
 
     @classmethod

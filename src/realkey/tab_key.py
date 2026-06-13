@@ -1,6 +1,6 @@
 from pyscript import web, when
 
-from realkey import key, tab, web_core, web_main, ASSA, DOM, MIWA, Opnus, Paclock, SargentAndGreenleaf, Schlage
+from realkey import key, tab, web_core, web_main, assa, dom, miwa, opnus, paclock, sargentandgreenleaf, schlage
 import urllib.parse
 
 key_select = web_core.SelectElement(web.page["key-select"])
@@ -23,6 +23,8 @@ def get_selected_key() -> key.Key | None:
 def run_validation():
     selected_key = get_selected_key()
     if selected_key is None:
+        web_main.info.html = ""
+        web_main.generate.enabled = False
         return
     if len(bitting.stripped_value) == 0:
         web_main.info.html = ""
@@ -119,28 +121,28 @@ class KeyTab(tab.Tab):
 
     def load_from_params(self, query_params):
         if "key" in query_params:
-            target_key = urllib.parse.unquote(query_params.get("key"))
-            for option in key_select.options:
-                if option.value == target_key:
-                    option.selected = True
-                    load_profiles_and_keyways()
-                    break
-            else:
+            target_key = urllib.parse.unquote(query_params["key"])
+            try:
+                key_select.selected_value = target_key
+                key_change()
+            except:
                 return
         if "profile" in query_params:
-            target_profile = urllib.parse.unquote(query_params.get("profile"))
-            for option in profile_select.options:
-                if option.value == target_profile:
-                    option.selected = True
-                    break
+            target_profile = urllib.parse.unquote(query_params["profile"])
+            try:
+                profile_select.selected_value = target_profile
+                profile_change()
+            except:
+                pass
         if "keyway" in query_params:
-            target_keyway = urllib.parse.unquote(query_params.get("keyway"))
-            for option in keyway_select.options:
-                if option.value == target_keyway:
-                    option.selected = True
-                    break
+            target_keyway = urllib.parse.unquote(query_params["keyway"])
+            try:
+                keyway_select.selected_value = target_keyway
+                keyway_change()
+            except:
+                pass
         if "bitting" in query_params:
-            target_bitting = urllib.parse.unquote(query_params.get("bitting"))
+            target_bitting = urllib.parse.unquote(query_params["bitting"])
             bitting.value = target_bitting
 
     async def generate(self, bg_worker) -> dict[str, str]:
@@ -148,12 +150,12 @@ class KeyTab(tab.Tab):
         if selected_key is None:
             return {"error": "No key selected"}
 
-        gen_keys = (await bg_worker.generate_key(selected_key.name(), profile_select.selected_value, keyway_select.selected_value, bitting.stripped_value)).to_py()  # type: ignore
+        gen_keys = (await bg_worker.generate_key(selected_key.tag(), profile_select.selected_value, keyway_select.selected_value, bitting.stripped_value)).to_py()  # type: ignore
         if "error" in gen_keys:
             return gen_keys
 
         gen_keys["description"] = get_pretty_name()
-        gen_keys["roughness"] = 0.5
+        gen_keys["roughness"] = 0.25
         gen_keys["metalness"] = 0.95
 
         return gen_keys

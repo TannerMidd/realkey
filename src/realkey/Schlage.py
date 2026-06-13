@@ -140,7 +140,7 @@ class EverestBlank:
 
 class Everest(key.Key, EverestBlank):
     @classmethod
-    def name(cls) -> str:
+    def tag(cls) -> str:
         return "schlage_everest"
 
     @classmethod
@@ -255,7 +255,7 @@ class Everest(key.Key, EverestBlank):
 
 class EverestPrimus(key.Key, EverestBlank):
     @classmethod
-    def name(cls) -> str:
+    def tag(cls) -> str:
         return "schlage_everest_primus"
 
     @classmethod
@@ -326,7 +326,7 @@ class EverestPrimus(key.Key, EverestBlank):
 
     @classmethod
     def validate_bitting(cls, profile: str, keyway: str, bitting: str):
-        if not " " in bitting:
+        if " " not in bitting:
             raise ValueError("No sidebar cuts specified")
 
         main_bitting, sidebar_bitting = bitting.split()

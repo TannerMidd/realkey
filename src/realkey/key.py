@@ -9,12 +9,12 @@ class Key(ABC):
 
     def __init_subclass__(cls, **kwargs):
         """Used to have a list of all current keys available for generation"""
-        Key._list[cls.name()] = cls
+        Key._list[cls.tag()] = cls
 
     @classmethod
     @abstractmethod
-    def name(cls) -> str:
-        """Returns the name of this key used for lookup"""
+    def tag(cls) -> str:
+        """Returns the tag of this key used for lookup"""
 
     @classmethod
     @abstractmethod

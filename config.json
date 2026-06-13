@@ -22,12 +22,13 @@
         "{FROM}/svgtools.py": "{TO}/svgtools.py",
         "{FROM}/web_core.py": "{TO}/web_core.py",
         "{FROM}/web_main.py": "{TO}/web_main.py",
-        "{FROM}/ASSA.py": "{TO}/ASSA.py",
-        "{FROM}/DOM.py": "{TO}/DOM.py",
-        "{FROM}/MIWA.py": "{TO}/MIWA.py",
-        "{FROM}/Opnus.py": "{TO}/Opnus.py",
-        "{FROM}/Paclock.py": "{TO}/Paclock.py",
-        "{FROM}/SargentAndGreenleaf.py": "{TO}/SargentAndGreenleaf.py",
-        "{FROM}/Schlage.py": "{TO}/Schlage.py"
+        "{FROM}/assa.py": "{TO}/assa.py",
+        "{FROM}/dom.py": "{TO}/dom.py",
+        "{FROM}/miwa.py": "{TO}/miwa.py",
+        "{FROM}/opnus.py": "{TO}/opnus.py",
+        "{FROM}/paclock.py": "{TO}/paclock.py",
+        "{FROM}/sargentandgreenleaf.py": "{TO}/sargentandgreenleaf.py",
+        "{FROM}/schlage.py": "{TO}/schlage.py",
+        "{FROM}/follower.py": "{TO}/follower.py"
     }
 }

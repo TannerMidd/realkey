@@ -44,4 +44,5 @@ class Tab(ABC):
                 "description" - A string description of the generated object
                 "roughness" - A roughness value from 0 to 1 used by the rendering engine when displaying the STL
                 "metalness" - A metalness value from 0 to 1 used by the rendering engine when displaying the STL
+                "color" - A color value used by the rendering engine when displaying the STL
         """
