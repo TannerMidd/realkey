@@ -73,7 +73,7 @@ def generate_key_art(key_tag: str, profile: str, keyway: str, bitting: str) -> d
 
 def generate_follower(length: float, diameter: float, top_tag: str, top_config: dict[str, float], bottom_tag: str, bottom_config: dict[str, float]) -> dict[str, str]:
     try:
-        generated_follower = follower.Follower.generate(follower.FollowerConfigData(length, diameter, top_tag, top_config, bottom_tag, bottom_config))
+        generated_follower = follower.Follower.generate(follower.FollowerConfigData(length, diameter, top_tag, top_config.to_py(), bottom_tag, bottom_config.to_py()))
         if generate_follower is None:
             return {"error": "No follower generated!"}
 

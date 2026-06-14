@@ -36,9 +36,20 @@ def max(shapes: ShapeList) -> Vector:
         if mx is None or m.X > mx:
             mx = m.X
         if my is None or m.Y > my:
-            my = m.Y
+            my = m.Y1
         if mz is None or m.Z > mz:
             mz = m.Z
     if mx is None or my is None or mz is None:
         raise ValueError("Unable to find maximum of ShapeList")
     return Vector(mx, my, mz)
+
+
+def Tube(inner_radius: float, outer_radius: float, length: float) -> Part:
+    with BuildPart() as tube:
+        with BuildSketch():
+            Circle(radius=outer_radius)
+            Circle(radius=inner_radius, mode=Mode.SUBTRACT)
+        extrude(amount=length/2, both=True)
+    if tube.part is None:
+        raise ValueError("Unable to generate Tube")
+    return tube.part
