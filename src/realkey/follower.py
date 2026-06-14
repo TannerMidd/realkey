@@ -341,7 +341,7 @@ class SchlageFollowerEnd(FollowerEnd):
 
     @classmethod
     def generate(cls, follower_length: float, follower_diameter: float, config_data: dict[str, float]) -> tuple[Part | None, float]:
-        placement_radius = 5.5 * MM
+        placement_radius = 4.5 * MM
         inner_radius = 3 * MM
         pin_radius = 0.75 * MM
         outer_radius = placement_radius + pin_radius
@@ -420,4 +420,5 @@ class Follower:
 if __name__ == "__main__":
     from ocp_vscode import *
 
-    follower = Follower.generate(FollowerConfigData(70, 10, "v_slot", {"v_slot_depth": 2, "v_slot_width": 2.5}, "flat_end", {}))
+    follower = Follower.generate(FollowerConfigData(70, 10, "schlage", {}, "flat_end", {}))
+    show_all()
