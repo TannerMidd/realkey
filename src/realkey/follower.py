@@ -341,7 +341,7 @@ class SchlageFollowerEnd(FollowerEnd):
 
     @classmethod
     def generate(cls, follower_length: float, follower_diameter: float, config_data: dict[str, float]) -> tuple[Part | None, float]:
-        placement_radius = 4.5 * MM
+        placement_radius = 4.75 * MM
         inner_radius = 3 * MM
         pin_radius = 0.75 * MM
         outer_radius = placement_radius + pin_radius
