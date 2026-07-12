@@ -219,17 +219,16 @@ class EverestBlank:
 
     EVEREST_X_DATUM = 31.400 * MM
     EVEREST_Y_DATUM = 10.725 * MM
+    EVEREST_Y2_DATUM = 19.338 * MM
     EVEREST_SL_Y_DATUM = 11 * MM
     EVEREST_SIDEBAR_Y_DATUM = 19.437 * MM
     EVEREST_SIDEBAR_WIDTH = 1.2 * MM
 
-    EVEREST_CUT_DEPTHS = [0.343 * IN - i for i in SCHLAGE_ROOT_DEPTHS]
-
     EVEREST_PRIMUS_SIDEBAR_SPACINGS = [(a + b) / 2 for a, b in zip(SCHLAGE_CUT_SPACINGS[0:-1], SCHLAGE_CUT_SPACINGS[1:])]
-    EVEREST_PRIMUS_SIDEBAR_OFFSET = 0.032 * IN
+    EVEREST_PRIMUS_SIDEBAR_OFFSET = 32 * THOU
 
-    EVEREST_PRIMUS_SIDEBAR_ROOT_DEPTHS = [0.036 * IN, 0.060 * IN]
-    EVEREST_PRIMUS_SIDEBAR_OFFSET_ROOT_DEPTHS = [0.024 * IN + i * 0.024 * IN for i in range(3)]
+    EVEREST_PRIMUS_SIDEBAR_ROOT_DEPTHS = [36 * THOU, 60 * THOU]
+    EVEREST_PRIMUS_SIDEBAR_OFFSET_ROOT_DEPTHS = [24 * THOU + i * 24 * THOU for i in range(3)]
 
     EVEREST_PRIMUS_SIDEBAR_CUT_DATA = [
         [-EVEREST_PRIMUS_SIDEBAR_OFFSET, EVEREST_PRIMUS_SIDEBAR_OFFSET_ROOT_DEPTHS[1]],
@@ -389,8 +388,10 @@ class Everest(key.Key, EverestBlank):
             spacing_index = i
 
             cut_x = cls.EVEREST_X_DATUM + SCHLAGE_CUT_SPACINGS[spacing_index]
-            cut_y = cls.EVEREST_Y_DATUM + cls.EVEREST_CUT_DEPTHS[depth_index]
+            cut_y = cls.EVEREST_Y2_DATUM - SCHLAGE_ROOT_DEPTHS[depth_index]
             cut_points.append((cut_x, cut_y))
+        # Add a ghost cut at the same height to trim any trailing steeple
+        cut_points.append((cut_points[-1][0] + 10*MM, cut_points[-1][1]))
         angled_cutter = key_cutters.smooth_angled_cutter(cut_points, SCHLAGE_CUT_WIDTH, cls.EVEREST_Y_DATUM - 0.25 * MM, SCHLAGE_CUT_ANGLE)
 
         with BuildPart() as everest_key:
@@ -401,7 +402,6 @@ class Everest(key.Key, EverestBlank):
             extrude(amount=cls.EVEREST_KEY_WIDTH * 2, mode=Mode.SUBTRACT)
         if everest_key.part is None:
             raise ValueError("Unable to generate key")
-        everest_key.part = everest_key.part.rotate(Axis.X, 180)
         return Part(everest_key.part)
 
 
@@ -486,7 +486,6 @@ class EverestSL(key.Key, EverestBlank):
             extrude(amount=cls.EVEREST_KEY_WIDTH * 2, mode=Mode.SUBTRACT)
         if everest_key.part is None:
             raise ValueError("Unable to generate key")
-        everest_key.part = everest_key.part.rotate(Axis.X, 180)
         return Part(everest_key.part)
 
 
@@ -564,8 +563,10 @@ class EverestPrimus(key.Key, EverestBlank):
             spacing_index = i
 
             cut_x = cls.EVEREST_X_DATUM + SCHLAGE_CUT_SPACINGS[spacing_index]
-            cut_y = cls.EVEREST_Y_DATUM + cls.EVEREST_CUT_DEPTHS[depth_index]
+            cut_y = cls.EVEREST_Y2_DATUM - SCHLAGE_ROOT_DEPTHS[depth_index]
             main_cut_points.append((cut_x, cut_y))
+        # Add a ghost cut at the same height to trim any trailing steeple
+        main_cut_points.append((main_cut_points[-1][0] + 10*MM, main_cut_points[-1][1]))
 
         for i, cut in enumerate(sidebar_bitting):
             pin_index = int(cut) - 1
@@ -590,19 +591,18 @@ class EverestPrimus(key.Key, EverestBlank):
             extrude(amount=cls.EVEREST_SIDEBAR_WIDTH - 0.005, mode=Mode.SUBTRACT)
         if primus_key.part is None:
             raise ValueError("Unable to generate key")
-        primus_key.part = primus_key.part.rotate(Axis.X, 180)
         return Part(primus_key.part)
 
 
 if __name__ == "__main__":
     from ocp_vscode import *
 
-    keyway = EverestKeyway.build_keyway("r235")
+    #keyway = EverestKeyway.build_keyway("r235")
     # sb = EverestPrimus.blank("e29p_ctrl", "s124")
     # export_step(sb, "e29_blank.step")
     # key = EverestPrimus.key("ep_6pin", "c124", "326163 23645")
     # export_step(key, "ep_key.step")
-    # key = Everest.key("e29_6pin", "s123", "878587")
+    key = Everest.key("e29_6pin", "s123", "879597")
     # export_step(key, "ep_key.step")
     # key = EverestSL.key("e29sl_ctrl", "r125", "2701507")
     # export_step(key, "e29sl_key.step")
