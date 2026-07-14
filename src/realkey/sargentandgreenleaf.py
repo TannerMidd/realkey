@@ -109,6 +109,8 @@ class SGSDB(key.Key):
         "sy3b": "resources/SargentAndGreenleaf/SY3B.step",
     }
 
+    SG_PROFILE_CUT_COUNTS = {profile: len(spacings) for profile, spacings in SG_CUT_SPACINGS.items()}
+
     @classmethod
     def tag(cls) -> str:
         return "sg_sdb"
@@ -173,12 +175,20 @@ class SGSDB(key.Key):
 
     @classmethod
     def validate_bitting(cls, profile: str, keyway: str, bitting: str):
-        if profile in ["87h", "9609", "sy3b"] and len(bitting) > 5:
-            raise ValueError(f"S&G {cls.profiles()[profile]} has a maximum of 5 cuts")
-        if profile in ["60", "96"] and len(bitting) > 6:
-            raise ValueError(f"S&G {cls.profiles()[profile]} has a maximum of 6 cuts")
-        if profile in ["87h_7cut", "96_7cut"] and len(bitting) > 7:
-            raise ValueError(f"S&G {cls.profiles()[profile]} has a maximum of 7 cuts")
+        if profile not in cls.SG_PROFILE_CUT_COUNTS:
+            raise ValueError(f'Unknown S&G profile "{profile}"')
+        if keyway != "lever":
+            raise ValueError(f'Unknown S&G keyway "{keyway}"')
+
+        display_name = profile
+        for profile_group in cls.profiles().values():
+            if profile in profile_group:
+                display_name = profile_group[profile]
+                break
+
+        required_cuts = cls.SG_PROFILE_CUT_COUNTS[profile]
+        if len(bitting) != required_cuts:
+            raise ValueError(f"S&G {display_name} requires exactly {required_cuts} cuts")
 
         if not bitting.isnumeric():
             raise ValueError("Only numeric cuts are allowed")

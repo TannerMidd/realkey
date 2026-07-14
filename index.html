@@ -4,24 +4,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <meta name="theme-color" content="#080b10">
     <meta property="og:title" content="realkey">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://smgoldade.github.io/realkey">
-    <meta property="og:description" content="A 3D key and locksport generation system that runs locally in your browser!">
-    <meta property="og:image" content="http://smgoldade.github.io/realkey/resources/SystemDArt.png" id="meta-image"/>
-    <meta property="og:image:type" content="image/png"/>
+    <meta property="og:url" content="https://tannermidd.github.io/realkey/">
+    <meta property="og:description" content="A browser-native precision CAD workspace for keys and locksport tools.">
+    <meta property="og:image" content="https://tannermidd.github.io/realkey/resources/SystemDArt.png" id="meta-image">
+    <meta property="og:image:type" content="image/png">
 
-    <title>realkey - 3D Locksport Model Generation</title>
+    <title>realkey — Precision Locksport CAD</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://pyscript.net">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
 
-    <link rel="stylesheet" href="https://fonts.bunny.net/css?family=alexandria:400" crossorigin>
+    <link rel="stylesheet" href="https://fonts.bunny.net/css?family=manrope:400,500,600,700|jetbrains-mono:500,600" crossorigin>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" type="text/css">
     <link rel="stylesheet" href="https://pyscript.net/releases/2026.6.1/core.css" type="text/css">
-
     <link rel="stylesheet" href="main.css" type="text/css">
 
     <script type="importmap">
@@ -39,168 +40,368 @@
 </head>
 
 <body>
-    <div id="loader">
-        <div id="status">
-            Loading Python...
+    <a class="skip-link" href="#main">Skip to workspace</a>
+
+    <div id="loader" role="status" aria-live="polite" aria-atomic="true">
+        <div class="loader-card">
+            <span class="loader-orbit" aria-hidden="true"><i class="fa-solid fa-key"></i></span>
+            <div>
+                <span class="loader-eyebrow">Local CAD engine</span>
+                <div id="status">Loading Python...</div>
+            </div>
         </div>
     </div>
+
     <div id="content">
-        <div id="header">
-            <h1 id="header-text">realkey</h1>
-            <div id="header-right">
-                <button class="info-button" popovertarget="share-dialog" title="Share"><i class="fa-solid fa-share"></i></button>
-                <button class="info-button" popovertarget="about-dialog" title="About realkey"><i class="fa-regular fa-circle-question"></i></button>
+        <header id="header">
+            <h1 id="header-text">
+                <span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-key"></i></span>
+                <span class="brand-copy">
+                    <span class="brand-name">realkey</span>
+                    <span class="brand-tagline">Precision locksport CAD</span>
+                </span>
+            </h1>
+
+            <div class="local-status" title="Generation and saved settings stay in this browser">
+                <span class="status-pulse" aria-hidden="true"></span>
+                Local-first workspace
             </div>
-        </div>
-        <div id="main">
-            <div class="input-pane">
-                <div class="tab-select">
-                    <button id="key-tab-button" class="tablinks active" title="Key"><i class="fa-solid fa-key"></i></button>
-                    <button id="follower-tab-button" class="tablinks" title="Follower"><img src="resources/plug_follower.svg"></button>
+
+            <nav id="header-right" aria-label="Application actions">
+                <button type="button" class="topbar-action" popovertarget="share-dialog" title="Share configuration">
+                    <i class="fa-solid fa-arrow-up-from-bracket" aria-hidden="true"></i>
+                    <span>Share</span>
+                </button>
+                <button type="button" class="topbar-action icon-only-mobile" popovertarget="about-dialog" title="About realkey" aria-label="About realkey">
+                    <i class="fa-regular fa-circle-question" aria-hidden="true"></i>
+                    <span>About</span>
+                </button>
+            </nav>
+        </header>
+
+        <main id="main">
+            <aside class="input-pane" aria-label="Model configuration">
+                <div class="inspector-scroll">
+                <div class="inspector-intro">
+                    <div>
+                        <p class="eyebrow">01 · Define</p>
+                        <h2>Model setup</h2>
+                    </div>
+                    <span class="inspector-badge">Parametric</span>
                 </div>
-                <hr>
-                <div id="key-tab" class="tab">
-                    <p>
-                        <label for="key-select">Key</label><br />
-                        <select id="key-select" disabled>
-                            <option>No keys loaded...</option>
-                        </select>
-                    </p>
-                    <p>
-                        <label for="profile-select">Profile</label><br />
-                        <select id="profile-select" disabled>
-                            <option>No profiles loaded...</option>
-                        </select>
-                    </p>
-                    <p>
-                        <label for="keyway-select">Keyway</label><br />
-                        <select id="keyway-select" disabled>
-                            <option>No keyways loaded...</option>
-                        </select>
-                    </p>
-                    <p>
-                    <div id="bitting-instructions"></div>
-                    <button id="show-advanced" class="info-button hide" popovertarget="advanced-bitting-dialog"><i class="fa-regular fa-circle-question"></i>Advanced</button>
-                    </p>
-                    <p>
-                        <label for="bitting">Bitting:</label><br />
-                        <input id="bitting" type="text" disabled />
-                    </p>
+                <p class="section-description">Choose a platform and describe the exact geometry you want to build.</p>
+
+                <div class="tab-select" role="tablist" aria-label="Generator type">
+                    <button type="button" id="key-tab-button" class="tablinks active" role="tab" aria-selected="true" aria-controls="key-tab" tabindex="0" title="Key generator">
+                        <span class="tab-icon"><i class="fa-solid fa-key" aria-hidden="true"></i></span>
+                        <span class="tab-copy"><strong>Key</strong><small>Cut &amp; profile</small></span>
+                    </button>
+                    <button type="button" id="follower-tab-button" class="tablinks" role="tab" aria-selected="false" aria-controls="follower-tab" tabindex="-1" title="Follower generator">
+                        <span class="tab-icon"><img src="resources/plug_follower.svg" alt="" aria-hidden="true"></span>
+                        <span class="tab-copy"><strong>Follower</strong><small>Core service</small></span>
+                    </button>
                 </div>
-                <div id="follower-tab" class="tab hide">
-                    <p>
-                        <label for="follower-select">Follower</label><br />
-                        <select id="follower-select" disabled>
-                            <option>No followers loaded...</option>
-                        </select>
-                    </p>
-                    <p>
-                        <label for="follower-length">Total Length:</label><br />
-                        <span id="follower-length"></span>
-                    </p>
-                    <p>
-                        <label for="follower-diameter">Diameter:</label><br />
-                        <span id="follower-diameter"></span>
-                    </p>
-                    <p>
-                        <label for="follower-top-select">Top End</label><br />
-                        <select id="follower-top-select" disabled>
-                            <option>No ends loaded...</option>
-                        </select>
-                    </p>
-                    <div id="follower-top-div" class="follower-end"></div>
-                    <p>
-                        <label for="follower-bottom-select">Bottom End</label><br />
-                        <select id="follower-bottom-select" disabled>
-                            <option>No ends loaded...</option>
-                        </select>
-                    </p>
-                    <div id="follower-bottom-div" class="follower-end"></div>
+
+                <section id="key-tab" class="tab" role="tabpanel" aria-labelledby="key-tab-button" aria-hidden="false" tabindex="0">
+                    <div class="field-stack">
+                        <div class="field">
+                            <label for="key-select">Key platform</label>
+                            <select id="key-select" disabled>
+                                <option>No keys loaded...</option>
+                            </select>
+                        </div>
+                        <div class="field-row">
+                            <div class="field">
+                                <label for="profile-select">Pin profile</label>
+                                <select id="profile-select" disabled>
+                                    <option>No profiles loaded...</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="keyway-select">Keyway</label>
+                                <select id="keyway-select" disabled>
+                                    <option>No keyways loaded...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="field bitting-field">
+                            <div class="field-heading">
+                                <label for="bitting">Bitting</label>
+                                <button type="button" id="show-advanced" class="inline-help hide" popovertarget="advanced-bitting-dialog">
+                                    <i class="fa-regular fa-circle-question" aria-hidden="true"></i>
+                                    <span>Decode guide</span>
+                                </button>
+                            </div>
+                            <input id="bitting" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" aria-describedby="bitting-instructions" placeholder="Leave blank for an uncut key" disabled>
+                            <div id="bitting-instructions" class="field-help"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="follower-tab" class="tab hide" role="tabpanel" aria-labelledby="follower-tab-button" aria-hidden="true" tabindex="0">
+                    <div class="field-stack">
+                        <div class="field">
+                            <label for="follower-select">Follower preset</label>
+                            <select id="follower-select" disabled>
+                                <option>No followers loaded...</option>
+                            </select>
+                        </div>
+                        <div class="field-row dimensional-fields">
+                            <div class="field">
+                                <span class="field-label">Total length</span>
+                                <span id="follower-length"></span>
+                            </div>
+                            <div class="field">
+                                <span class="field-label">Diameter</span>
+                                <span id="follower-diameter"></span>
+                            </div>
+                        </div>
+                        <fieldset class="end-config">
+                            <legend class="end-legend">Top-end geometry</legend>
+                            <div class="field">
+                                <label for="follower-top-select">Top end</label>
+                                <select id="follower-top-select" disabled>
+                                    <option>No ends loaded...</option>
+                                </select>
+                            </div>
+                            <div id="follower-top-div" class="follower-end"></div>
+                        </fieldset>
+                        <fieldset class="end-config">
+                            <legend class="end-legend">Bottom-end geometry</legend>
+                            <div class="field">
+                                <label for="follower-bottom-select">Bottom end</label>
+                                <select id="follower-bottom-select" disabled>
+                                    <option>No ends loaded...</option>
+                                </select>
+                            </div>
+                            <div id="follower-bottom-div" class="follower-end"></div>
+                        </fieldset>
+                    </div>
+                </section>
+
+                <details id="fabrication-panel" class="fabrication-panel" open>
+                    <summary>
+                        <span class="summary-heading">
+                            <span class="section-number">02</span>
+                            <span>
+                                <strong id="fabrication-heading">Fabrication check</strong>
+                                <small>Process fit &amp; tolerances</small>
+                            </span>
+                        </span>
+                        <span class="summary-chevron" aria-hidden="true"><i class="fa-solid fa-chevron-down"></i></span>
+                    </summary>
+                    <div class="fabrication-body">
+                        <div class="field">
+                            <label for="fabrication-profile">Printer profile</label>
+                            <select id="fabrication-profile" aria-describedby="fabrication-profile-help">
+                                <option value="standard">Standard / no compensation</option>
+                                <option value="fdm-detail">FDM high detail</option>
+                                <option value="resin-detail">Resin high detail</option>
+                                <option value="custom">Custom profile</option>
+                            </select>
+                            <small id="fabrication-profile-help">Profile checks flag envelope and resolution risks before export.</small>
+                        </div>
+
+                        <details id="fabrication-profile-settings" class="profile-settings">
+                            <summary><span>Profile settings</span><small>6 parameters</small><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
+                            <fieldset class="fabrication-fields">
+                                <legend class="visually-hidden">Fabrication profile measurements</legend>
+                                <label for="fabrication-nozzle">Nozzle
+                                    <span class="number-with-unit"><input id="fabrication-nozzle" type="number" min="0.1" max="5" step="0.01" value="0.4" inputmode="decimal"><span>mm</span></span>
+                                </label>
+                                <label for="fabrication-layer-height">Layer
+                                    <span class="number-with-unit"><input id="fabrication-layer-height" type="number" min="0.01" max="2" step="0.01" value="0.08" inputmode="decimal"><span>mm</span></span>
+                                </label>
+                                <label for="fabrication-wall-lines">Walls
+                                    <input id="fabrication-wall-lines" type="number" min="1" max="16" step="1" value="3" inputmode="numeric">
+                                </label>
+                                <label for="fabrication-build-width">Build X
+                                    <span class="number-with-unit"><input id="fabrication-build-width" type="number" min="10" max="5000" step="1" value="256" inputmode="decimal"><span>mm</span></span>
+                                </label>
+                                <label for="fabrication-build-depth">Build Y
+                                    <span class="number-with-unit"><input id="fabrication-build-depth" type="number" min="10" max="5000" step="1" value="256" inputmode="decimal"><span>mm</span></span>
+                                </label>
+                                <label for="fabrication-build-height">Build Z
+                                    <span class="number-with-unit"><input id="fabrication-build-height" type="number" min="10" max="5000" step="1" value="256" inputmode="decimal"><span>mm</span></span>
+                                </label>
+                            </fieldset>
+                        </details>
+
+                        <div id="fabrication-report" class="fabrication-report" aria-label="Fabrication analysis">
+                            Generate a model to review fabrication readiness.
+                        </div>
+                    </div>
+                </details>
                 </div>
-                <hr>
-                <div id="info"></div>
-                <p>
-                    <button id="generate" class="blue-button" disabled>Generate</button>
-                </p>
-            </div>
-            <div class="view-pane">
+
+                <div class="generation-dock">
+                    <div id="info" role="status" aria-live="polite" aria-atomic="true"></div>
+                    <button type="button" id="generate" class="primary-button" disabled>
+                        <span class="button-icon"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></span>
+                        <span id="generate-label">Generate model</span>
+                        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                    </button>
+                    <p class="workspace-note"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Inputs autosave on this device only.</p>
+                </div>
+            </aside>
+
+            <section class="view-pane" aria-labelledby="preview-heading">
+                <header class="stage-header">
+                    <div>
+                        <p class="eyebrow">03 · Inspect</p>
+                        <h2 id="preview-heading">Model workspace</h2>
+                    </div>
+                    <div class="stage-capabilities" aria-label="Preview capabilities">
+                        <span><i class="fa-solid fa-cube" aria-hidden="true"></i> Realtime 3D</span>
+                        <span><i class="fa-solid fa-lock" aria-hidden="true"></i> On-device</span>
+                    </div>
+                </header>
+
                 <div id="model-view">
-                    <canvas id="canvas"></canvas>
-                    <span id="model-description"></span>
-                    <span id="model-generating"></span>
+                    <div class="stage-readout" aria-hidden="true">
+                        <span>RK / VIEW 01</span>
+                        <span>MM</span>
+                    </div>
+                    <div class="view-toolbar" role="toolbar" aria-label="Model view controls">
+                        <button type="button" id="view-fit" class="view-control" title="Fit model in view" aria-label="Fit model in view"><i class="fa-solid fa-up-right-and-down-left-from-center" aria-hidden="true"></i><span>Fit</span></button>
+                        <button type="button" id="view-front" class="view-control" title="Front view" aria-label="Show front view" aria-pressed="false"><i class="fa-regular fa-square" aria-hidden="true"></i><span>Front</span></button>
+                        <button type="button" id="view-top" class="view-control" title="Top view" aria-label="Show top view" aria-pressed="false"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Top</span></button>
+                        <button type="button" id="view-iso" class="view-control" title="Isometric view" aria-label="Show isometric view" aria-pressed="true"><i class="fa-solid fa-cube" aria-hidden="true"></i><span>Iso</span></button>
+                    </div>
+                    <canvas id="canvas" role="img" aria-label="3D rendered preview of the active model"></canvas>
+                    <div class="axis-mark" aria-hidden="true">
+                        <span class="axis-z">Z</span>
+                        <span class="axis-x">X</span>
+                        <span class="axis-y">Y</span>
+                    </div>
+                    <div class="model-caption">
+                        <span class="caption-label">Active model</span>
+                        <span id="model-description" aria-live="polite"></span>
+                    </div>
+                    <span id="model-generating" role="status" aria-live="polite" aria-atomic="true"></span>
                 </div>
-                <p>
-                    <button id="save-stl" class="red-button" title="Download STL" disabled><i class="fa-solid fa-download"></i> STL</button>
-                    <button id="save-step" class="red-button" title="Download STEP" disabled><i class="fa-solid fa-download"></i> STEP</button>
-                </p>
+
+                <div class="stage-meta">
+                    <p class="viewer-help"><i class="fa-solid fa-computer-mouse" aria-hidden="true"></i> Drag to orbit · Right-drag to pan · Scroll or pinch to zoom</p>
+                    <span class="privacy-note"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Geometry stays local</span>
+                </div>
+
+                <section class="export-dock" aria-labelledby="export-heading">
+                    <div class="export-heading">
+                        <div>
+                            <p class="eyebrow">Output</p>
+                            <h3 id="export-heading">Export geometry</h3>
+                        </div>
+                        <p>Generate once, then choose the format for your workflow.</p>
+                    </div>
+                    <div class="download-actions" aria-label="Model downloads">
+                        <button type="button" id="save-stl" class="export-button" title="Download STL" disabled>
+                            <span class="export-icon"><i class="fa-solid fa-cubes-stacked" aria-hidden="true"></i></span>
+                            <span class="export-copy"><strong>STL</strong><small>Mesh · Slicing</small></span>
+                            <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" id="save-step" class="export-button" title="Download STEP" disabled>
+                            <span class="export-icon"><i class="fa-solid fa-draw-polygon" aria-hidden="true"></i></span>
+                            <span class="export-copy"><strong>STEP</strong><small>Solid · CAD</small></span>
+                            <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" id="save-3mf" class="export-button" title="Download 3MF" disabled>
+                            <span class="export-icon"><i class="fa-solid fa-box" aria-hidden="true"></i></span>
+                            <span class="export-copy"><strong>3MF</strong><small>Print package</small></span>
+                            <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <dialog id="about-dialog" class="app-dialog dialog-wide" popover role="dialog" aria-labelledby="about-dialog-title">
+        <div class="dialog-shell">
+            <header class="dialog-header">
                 <div>
-                    <span style="height: 15px; font-size: 10px; color:#555">Left click to orbit, right click to pan,
-                        scrollwheel to zoom</span>
+                    <p class="eyebrow">Project &amp; guidance</p>
+                    <h2 id="about-dialog-title">About realkey</h2>
                 </div>
+                <button type="button" class="dialog-close" popovertarget="about-dialog" popovertargetaction="hide" title="Close" aria-label="Close About realkey"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </header>
+            <div id="about-info" class="scrollable-dialog prose">
+                <p class="dialog-lede">realkey is a browser-native CAD workspace for generating precise, fabrication-ready keys and locksport tools. Geometry is built locally on your device.</p>
+                <p>realkey is powered at its core by <a href="https://build123d.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer">build123d</a>, a code-based CAD system written in Python.</p>
+                <p>Many target locks have very tight tolerances. The following settings are a practical starting point for print quality.</p>
+                <details id="settings-detail">
+                    <summary><span>Recommended 3D printing settings</span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
+                    <div class="details-content">
+                        <p>Good key materials are rigid and wear resistant. If a material is suitable for gears, it may be a useful starting point.</p>
+                        <h3>Materials</h3>
+                        <ul>
+                            <li>Carbon fiber nylon</li>
+                            <li>Polycarbonate</li>
+                            <li>PETG</li>
+                            <li>PLA — usable, but comparatively brittle</li>
+                        </ul>
+                        <h3>Process settings</h3>
+                        <ul class="settings-grid">
+                            <li><span>Nozzle</span><strong>0.4 mm</strong></li>
+                            <li><span>Layer height</span><strong>0.08 mm</strong></li>
+                            <li><span>First layer</span><strong>0.16–0.20 mm</strong></li>
+                            <li><span>Top line width</span><strong>0.32 mm</strong></li>
+                            <li><span>Wall order</span><strong>Outer / Inner</strong></li>
+                            <li><span>Wall loops</span><strong>3</strong></li>
+                            <li><span>Top shell layers</span><strong>9</strong></li>
+                            <li><span>Infill</span><strong>100% gyroid</strong></li>
+                            <li><span>Outer wall</span><strong>50 mm/s</strong></li>
+                            <li><span>Inner wall</span><strong>80 mm/s</strong></li>
+                            <li><span>Supports</span><strong>Enabled</strong></li>
+                            <li><span>Top Z distance</span><strong>0.16–0.20 mm</strong></li>
+                        </ul>
+                    </div>
+                </details>
+                <p>For a complete technical tour, explore the engineering dossier or visit the source repository.</p>
+                <p class="resource-links">
+                    <a class="resource-card" href="architecture/" title="RealKey engineering dossier"><i class="fa-solid fa-book-open" aria-hidden="true"></i><span><strong>Engineering dossier</strong><small>Architecture, flows, and decisions</small></span></a>
+                    <a class="resource-card" href="https://github.com/TannerMidd/realkey" title="realkey GitHub" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-github" aria-hidden="true"></i><span><strong>GitHub repository</strong><small>Source, issues, and contribution</small></span></a>
+                </p>
             </div>
         </div>
-    </div>
-    </div>
-    <dialog id="about-dialog" popover>
-        <div style="float: right;"><button class="info-button" popovertarget="about-dialog" popovertargetaction="hide" title="Close"><i class="fa-solid fa-xmark"></i></button></div>
-        <div id="about-info" class="scrollable-dialog">
-            <h2>About realkey</h2>
-            <p>realkey is a system for generating 3D models of keys that can be used for 3D printing keys. It runs
-                entirely on your local browser!</a></p>
-            <p>realkey is powered at its core by <a href="https://build123d.readthedocs.io/en/latest/" target="_blank">build123d</a>, a code-based CAD system written in Python.</p>
-            <p>Many of the target locks have very high tolerances, to improve print quality, some recommended settings
-                are available:
-            <details id="settings-detail">
-                <summary><b>3D Printing Settings</b></summary>
-                Good plastics for keys are rigid and wear resistant. If it's good for gears, it's good for keys!
-                <p>Plastics:
-                <ul>
-                    <li>Carbon Fiber Nylon</li>
-                    <li>Polycarbonate</li>
-                    <li>PETG</li>
-                    <li>PLA - Even PLA works well! It can be a little brittle however.</li>
-                </ul>
-                </p>
-                <p>Settings:
-                <ul>
-                    <li>Nozzle: 0.4mm</li>
-                    <li>Start with your printers HIGHEST DETAIL default, then adjust</li>
-                    <li>Layer Height: 0.08mm</li>
-                    <li>First Layer Height: 0.16mm - 0.20mm</li>
-                    <li>Top Surface Line Width: 0.32mm</li>
-                    <li>Walls Printing Order: Outer/Inner</li>
-                    <li>External Bridge Density: 107%</li>
-                    <li>Wall Loops: 3</li>
-                    <li>Top Shell Layers: 9</li>
-                    <li>Top Surface Pattern: Monotonic Line</li>
-                    <li>Infill: 100%</li>
-                    <li>Infill Pattern: Gyroid - <i>This probably does not matter!</i></li>
-                    <li>Outer Wall Speed: 50mm/s</li>
-                    <li>Inner Wall Speed: 80mm/s</li>
-                    <li>Bridge External Speed: 10mm/s</li>
-                    <li>Supports: <b>Enabled</b></li>
-                    <li>Ignore Small Overhangs: <b>Disabled</b></li>
-                    <li>Top Z Distance: 0.16mm-0.20mm</li>
-                    <li>Bottom Z Distance: 0.20mm</li>
-                </ul>
-                </p>
-            </details>
-            </p>
-            <p>For more information, checkout the github page!</p>
-            <h2><a href="https://github.com/smgoldade/realkey" title="realkey GitHub" target="_blank"><i class="fa-brands fa-github"></i></a></h2>
+    </dialog>
+
+    <dialog id="advanced-bitting-dialog" class="app-dialog" popover role="dialog" aria-labelledby="advanced-bitting-title">
+        <div class="dialog-shell">
+            <header class="dialog-header">
+                <div>
+                    <p class="eyebrow">Reference</p>
+                    <h2 id="advanced-bitting-title">Advanced bitting guide</h2>
+                </div>
+                <button type="button" class="dialog-close" popovertarget="advanced-bitting-dialog" popovertargetaction="hide" title="Close" aria-label="Close advanced bitting help"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </header>
+            <div id="advanced-bitting-info" class="scrollable-dialog prose"></div>
         </div>
     </dialog>
-    <dialog id="advanced-bitting-dialog" popover>
-        <div style="float: right;"><button class="info-button" popovertarget="advanced-bitting-dialog" popovertargetaction="hide" title="Close"><i class="fa-solid fa-xmark"></i></button></div>
-        <div id="advanced-bitting-info" class="scrollable-dialog"></div>
-    </dialog>
-    <dialog id="share-dialog" popover>
-        <div style="float: right;"><button class="info-button" popovertarget="share-dialog" popovertargetaction="hide" title="Close"><i class="fa-solid fa-xmark"></i></button></div>
-        <p id="share-setup" class="scrollable-dialog">
-            <input type="checkbox" id="share-settings" checked><label for="share-values">Share settings?</label><br>
-            <input type="checkbox" id="share-generate" checked><label for="share-values">Auto generate?</label><br>
-        </p>        
-        <button id="copy-link" title="Copy link" class="blue-button" popovertarget="share-dialog" popovertargetaction="hide"><i class="fa-solid fa-link"></i> Copy Link</button>
+
+    <dialog id="share-dialog" class="app-dialog dialog-compact" popover role="dialog" aria-labelledby="share-dialog-title">
+        <div class="dialog-shell">
+            <header class="dialog-header">
+                <div>
+                    <p class="eyebrow">Link handoff</p>
+                    <h2 id="share-dialog-title">Share configuration</h2>
+                </div>
+                <button type="button" class="dialog-close" popovertarget="share-dialog" popovertargetaction="hide" title="Close" aria-label="Close sharing options"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </header>
+            <fieldset id="share-setup" class="scrollable-dialog">
+                <legend class="visually-hidden">Share configuration options</legend>
+                <label class="choice-card" for="share-settings">
+                    <input type="checkbox" id="share-settings">
+                    <span><strong>Include this model configuration</strong><small>May include a working key bitting. Anyone with the link can read included settings.</small></span>
+                </label>
+                <label class="choice-card" for="share-generate">
+                    <input type="checkbox" id="share-generate">
+                    <span><strong>Request recipient review</strong><small>Prompts them to inspect settings before local generation.</small></span>
+                </label>
+                <p class="privacy-callout"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Included settings stay in the URL fragment, outside server request logs. The link itself is still sensitive.</p>
+            </fieldset>
+            <button type="button" id="copy-link" title="Copy fragment link" class="primary-button"><i class="fa-solid fa-link" aria-hidden="true"></i><span>Copy fragment link</span></button>
+        </div>
     </dialog>
 </body>
 

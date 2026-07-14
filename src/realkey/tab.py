@@ -27,10 +27,16 @@ class Tab(ABC):
     def hide(self):
         self._tab.hidden = True
         self._button.active = False
+        self._button._web_element.setAttribute("aria-selected", "false")  # type: ignore
+        self._button._web_element.setAttribute("tabindex", "-1")  # type: ignore
+        self._tab._web_element.setAttribute("aria-hidden", "true")  # type: ignore
 
     def show(self):
         self._tab.hidden = False
         self._button.active = True
+        self._button._web_element.setAttribute("aria-selected", "true")  # type: ignore
+        self._button._web_element.setAttribute("tabindex", "0")  # type: ignore
+        self._tab._web_element.setAttribute("aria-hidden", "false")  # type: ignore
 
     def _populate_param(self, query_params, param_name: str, set_value: Callable[[str], Any]) -> bool:
         """A helper method to set query parameters. If a given parameter name is provided, set_value is called with the value

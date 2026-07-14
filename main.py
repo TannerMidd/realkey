@@ -4,10 +4,21 @@ import sys, micropip # type: ignore
 # Kick off key generating worker
 display("Loading key generation system...", target="status", append=False)
 print("[FG] Waiting for background install")
-keygen = await workers["keygen"]
-await keygen.set_base_url(window.location.origin + window.location.pathname)
+try:
+    keygen = await workers["keygen"]
+    # Preserve the full document URL. The worker resolves assets with
+    # urljoin(), which handles both /realkey/ and /realkey/index.html.
+    await keygen.set_base_url(str(window.location.href))
+except Exception as error:
+    display(
+        "realkey could not start its local CAD engine. Check your connection, then reload to retry.",
+        target="status",
+        append=False,
+    )
+    print(f"[FG] Background worker failed: {error}")
+    raise
 print("[FG] Background worker loaded")
-await micropip.install(["typing-extensions"])
+await micropip.install(["typing-extensions==4.15.0"])
 display("Loaded!", target="status", append=False)
 
 

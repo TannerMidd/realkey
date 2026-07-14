@@ -1,4 +1,4 @@
-# [realkey](https://smgoldade.github.io/realkey)
+# [realkey](https://tannermidd.github.io/realkey/)
 A Python project devoted to generating 3D models for keys.  
 
 ## Purpose
@@ -10,6 +10,38 @@ The primary idea is contained in the [Key](https://github.com/smgoldade/realkey/
 Key models are built up using [build123d](https://github.com/gumyr/build123d), outputting build123d Parts for keys.
 The entire setup is designed to run locally in a web browser. 
 The front end uses [Pyscript](https://pyscript.net) to load defined keys and allow the user to generate models as needed, exporting to the formats build123d supports.
+
+## Current application
+
+The browser app now includes the first three product phases:
+
+- **Trustworthy generation:** worker-enforced follower validation, corrected key-family rules, unique job exports, stale-result protection, recoverable errors, and regression tests.
+- **Workspace experience:** an accessible responsive UI, efficient 3D preview, input-time validation, local workspace restore, and privacy-safe fragment sharing. Shared links never auto-run CAD; recipients review them first.
+- **Fabrication intelligence:** editable printer/material profiles, build-volume and layer checks, honest reporting when wall or feature measurements are unavailable, and STL, STEP, and 3MF exports.
+
+Fabrication reports are conservative profile comparisons, not a guarantee that a part is safe, printable, durable, or dimensionally correct. Verify the sliced toolpath, material behavior, dimensions, orientation, and fit before use.
+
+## Run locally
+
+Serve the repository root over HTTP; opening `index.html` directly does not provide the browser worker and resource behavior the app expects.
+
+```bash
+python -m http.server 8765
+```
+
+Then open `http://localhost:8765/`. The first load downloads the pinned PyScript CAD runtime and can take longer than subsequent interactions.
+
+## Test
+
+```bash
+python -m pip install "pytest>=8.3,<9"
+PYTHONPATH=src python -m pytest -q
+```
+
+On PowerShell, use `$env:PYTHONPATH = "src"` before the pytest command. CI runs the same dependency-light regression suite and source checks on every push and pull request.
+
+## Technical Documentation
+Explore the [interactive engineering dossier](https://tannermidd.github.io/realkey/architecture/) for the complete system architecture, runtime lifecycle, supported key families, follower engine, resource pipeline, security boundaries, quality assessment, and maintainer reference. A shareable [Word handbook](docs/RealKey_Technical_Documentation.docx) is also included in the repository.
 
 ## How It's Organized
 The conceptual idea behind the key taxonomy is as follows:

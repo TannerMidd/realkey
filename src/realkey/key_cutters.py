@@ -23,7 +23,7 @@ def angled_cutter(cuts: list[tuple[float, float]], cut_root_width: float, neutra
             if dx * 2 + cut_root_width > max_cutter_width:
                 # cap dx, requiring extra points
                 dx = (max_cutter_width - cut_root_width) / 2
-                dy = abs(dx / cs)
+                dy = abs(dx * cs)
 
                 with BuildLine():
                     Polyline(

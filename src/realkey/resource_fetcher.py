@@ -5,7 +5,7 @@ if sys.platform == "emscripten":
     from pyodide.http import pyxhr
     from js import URL
 
-import os, pathlib
+import os, pathlib, urllib.parse
 
 _base_url: str = ""
 
@@ -17,12 +17,14 @@ def set_base_url(base_url: str):
 
 def pre_fetch_resource(resource: str) -> bool:
     if sys.platform != "emscripten":
-        return True
+        # Native callers should receive a truthful result instead of failing
+        # later inside an importer with an unrelated file-open error.
+        return pathlib.Path(resource).is_file()
 
     if _base_url == "":
         raise AttributeError("No Base URL has been set for resource fetching!")
 
-    fetch_path = f"{_base_url}/{resource}"
+    fetch_path = urllib.parse.urljoin(_base_url, resource.replace("\\", "/"))
 
     if pathlib.Path(resource).is_file():
         return True

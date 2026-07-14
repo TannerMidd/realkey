@@ -21,27 +21,28 @@ def get_selected_key() -> key.Key | None:
 
 def run_validation():
     selected_key = get_selected_key()
+    web_main.set_generation_context("blank" if len(bitting.stripped_value) == 0 else "key")
     if selected_key is None:
-        web_main.info.html = ""
+        web_main.info.text = ""
         web_main.generate.enabled = False
         return
     if len(bitting.stripped_value) == 0:
-        web_main.info.html = ""
+        web_main.info.text = ""
         web_main.generate.enabled = True
         return
     try:
         selected_key.validate_bitting(profile_select.selected_value, keyway_select.selected_value, bitting.stripped_value)
-        web_main.info.html = ""
+        web_main.info.text = ""
         web_main.generate.enabled = True
     except Exception as e:
-        web_main.info.html = f"<span style='color:#800'>{e}</span>"
+        web_main.info.text = str(e)
         web_main.generate.enabled = False
 
 
 def load_profiles_and_keyways():
     selected_key = get_selected_key()
-    web_main.info.html = ""
-    web_main.model_generating.html = ""
+    web_main.info.text = ""
+    web_main.model_generating.text = ""
 
     if selected_key is None:
         profile_select.populate("No profiles loaded...", {})
@@ -75,17 +76,21 @@ def load_profiles_and_keyways():
 
 @when("change", "#key-select")
 def key_change():
+    web_main.on_model_input_changed()
     load_profiles_and_keyways()
     run_validation()
+    web_main.persist_workspace_state()
 
 
 @when("change", "#profile-select")
 def profile_change():
+    web_main.on_model_input_changed()
     run_validation()
 
 
 @when("change", "#keyway-select")
 def keyway_change():
+    web_main.on_model_input_changed()
     run_validation()
 
 
@@ -93,8 +98,9 @@ def get_pretty_name() -> str:
     return f"{key_select.selected_html} - {profile_select.selected_html} - {keyway_select.selected_html} - {bitting.stripped_value if len(bitting.stripped_value) > 0 else 'Blank'}"
 
 
-@when("keyup", "#bitting")
+@when("input", "#bitting")
 def bitting_change():
+    web_main.on_model_input_changed()
     run_validation()
 
 
@@ -152,6 +158,7 @@ class KeyTab(tab.Tab):
 
         def set_bitting(bittin: str):
             bitting.value = bittin
+            bitting_change()
 
         self._populate_param(query_params, "bitting", set_bitting)
 
@@ -160,11 +167,18 @@ class KeyTab(tab.Tab):
         if selected_key is None:
             return {"error": "No key selected"}
 
-        gen_keys = (await bg_worker.generate_key(selected_key.tag(), profile_select.selected_value, keyway_select.selected_value, bitting.stripped_value)).to_py()  # type: ignore
+        # Capture one immutable request so edits made while CAD is running
+        # cannot relabel another model's files or preview.
+        key_tag = selected_key.tag()
+        profile = profile_select.selected_value
+        keyway = keyway_select.selected_value
+        bitting_value = bitting.stripped_value
+        description = get_pretty_name()
+        gen_keys = (await bg_worker.generate_key(key_tag, profile, keyway, bitting_value)).to_py()  # type: ignore
         if "error" in gen_keys:
             return gen_keys
 
-        gen_keys["description"] = get_pretty_name()
+        gen_keys["description"] = description
         gen_keys["roughness"] = 0.25
         gen_keys["metalness"] = 0.95
 

@@ -36,7 +36,7 @@ def max(shapes: ShapeList) -> Vector:
         if mx is None or m.X > mx:
             mx = m.X
         if my is None or m.Y > my:
-            my = m.Y1
+            my = m.Y
         if mz is None or m.Z > mz:
             mz = m.Z
     if mx is None or my is None or mz is None:
@@ -71,5 +71,3 @@ def generate_lifting_cut(face: Face, direction: VectorLike, lift_direction:Vecto
     if lifting_cut.part is None:
         raise ValueError("Unable to generate lifting cut")
     return lifting_cut.part
-
-    

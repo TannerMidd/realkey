@@ -1,0 +1,1554 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="RealKey engineering dossier: complete architecture, runtime, geometry, key-family, plug-follower, asset, security, quality, and extension documentation.">
+  <meta name="theme-color" content="#040005">
+  <meta property="og:title" content="RealKey — Engineering Dossier">
+  <meta property="og:description" content="Browser-native parametric CAD for keys and plug followers: architecture, runtime flows, supported systems, security boundaries, and maintainer reference.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://smgoldade.github.io/realkey/architecture/">
+  <meta property="og:image" content="https://smgoldade.github.io/realkey/architecture/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="RealKey — Engineering Dossier">
+  <meta name="twitter:description" content="A complete technical map of RealKey's browser-hosted CAD system.">
+  <meta name="twitter:image" content="https://smgoldade.github.io/realkey/architecture/og.png">
+  <title>RealKey — Engineering Dossier</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #040005;
+      --bg-grid: rgba(122, 160, 227, .045);
+      --panel: #0d1015;
+      --panel-2: #141922;
+      --panel-3: #1a202a;
+      --line: #293443;
+      --line-bright: #3b4d63;
+      --text: #edf2f8;
+      --muted: #9aa7b5;
+      --dim: #6e7a88;
+      --blue: #7aa0e3;
+      --blue-deep: #315f9f;
+      --cyan: #55c7c0;
+      --gold: #c9a248;
+      --red: #e06a73;
+      --green: #6dc494;
+      --violet: #a58ce1;
+      --shadow: 0 22px 70px rgba(0, 0, 0, .36);
+      --sans: "Segoe UI Variable", "Segoe UI", Inter, Arial, sans-serif;
+      --display: "Bahnschrift", "Segoe UI Variable Display", "Segoe UI", sans-serif;
+      --mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 1.25rem; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        linear-gradient(var(--bg-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px),
+        radial-gradient(circle at 72% 4%, rgba(49, 95, 159, .18), transparent 30rem),
+        var(--bg);
+      background-size: 34px 34px, 34px 34px, auto, auto;
+      color: var(--text);
+      font: 400 16px/1.72 var(--sans);
+      text-rendering: optimizeLegibility;
+    }
+
+    a { color: var(--blue); text-decoration-thickness: 1px; text-underline-offset: .22em; }
+    a:hover { color: #a9c4f4; }
+    img { max-width: 100%; }
+    code, pre, .mono { font-family: var(--mono); }
+    code {
+      padding: .12em .34em;
+      border: 1px solid rgba(122, 160, 227, .18);
+      border-radius: 4px;
+      background: rgba(122, 160, 227, .07);
+      color: #c8d8f2;
+      font-size: .88em;
+    }
+    strong { color: #fff; }
+    ::selection { color: #fff; background: rgba(49, 95, 159, .75); }
+    :focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+
+    .skip-link {
+      position: fixed;
+      top: .75rem;
+      left: .75rem;
+      z-index: 100;
+      transform: translateY(-180%);
+      padding: .65rem .9rem;
+      border: 1px solid var(--blue);
+      border-radius: 5px;
+      background: var(--panel-3);
+      color: #fff;
+      transition: transform .18s ease;
+    }
+    .skip-link:focus { transform: translateY(0); }
+
+    .reading-progress {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 80;
+      height: 3px;
+      background: rgba(255, 255, 255, .04);
+    }
+    .reading-progress span {
+      display: block;
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue), var(--cyan), var(--gold));
+      box-shadow: 0 0 14px rgba(85, 199, 192, .52);
+    }
+
+    .mobile-bar {
+      display: none;
+      position: sticky;
+      top: 3px;
+      z-index: 70;
+      align-items: center;
+      justify-content: space-between;
+      padding: .75rem 1rem;
+      border-bottom: 1px solid var(--line);
+      background: rgba(4, 0, 5, .92);
+      backdrop-filter: blur(16px);
+    }
+    .mobile-brand {
+      font: 700 .86rem/1 var(--display);
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    .nav-toggle {
+      display: grid;
+      place-items: center;
+      width: 2.6rem;
+      height: 2.3rem;
+      border: 1px solid var(--line-bright);
+      border-radius: 5px;
+      background: var(--panel-2);
+      color: #fff;
+      font: 700 1rem var(--mono);
+      cursor: pointer;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1060px);
+      gap: 3.2rem;
+      width: min(100% - 3rem, 1380px);
+      margin: 0 auto;
+      align-items: start;
+    }
+
+    .toc {
+      position: sticky;
+      top: 2rem;
+      max-height: calc(100vh - 4rem);
+      margin: 2rem 0;
+      padding: 1rem 0 1.2rem;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(13, 16, 21, .82);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      scrollbar-width: thin;
+      scrollbar-color: var(--line-bright) transparent;
+    }
+    .toc-label {
+      margin: 0 1rem .75rem;
+      padding-bottom: .7rem;
+      border-bottom: 1px solid var(--line);
+      color: var(--gold);
+      font: 700 .68rem/1 var(--mono);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    .toc a {
+      display: grid;
+      grid-template-columns: 2rem 1fr;
+      gap: .45rem;
+      align-items: center;
+      min-height: 2.25rem;
+      padding: .42rem 1rem .42rem .85rem;
+      border-left: 2px solid transparent;
+      color: var(--muted);
+      font-size: .79rem;
+      line-height: 1.2;
+      text-decoration: none;
+      transition: color .18s ease, background .18s ease, border-color .18s ease;
+    }
+    .toc a:hover { color: #fff; background: rgba(122, 160, 227, .06); }
+    .toc a[aria-current="true"] {
+      border-left-color: var(--cyan);
+      background: linear-gradient(90deg, rgba(85, 199, 192, .12), transparent);
+      color: #fff;
+    }
+    .toc .n { color: var(--blue); font: 700 .68rem/1 var(--mono); }
+
+    main { min-width: 0; padding-bottom: 4rem; }
+    .masthead {
+      position: relative;
+      min-height: 690px;
+      padding: clamp(5rem, 10vw, 8.2rem) clamp(1.4rem, 4vw, 4.2rem) 3.5rem;
+      overflow: hidden;
+      border-inline: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(100deg, rgba(4, 0, 5, .98) 0%, rgba(4, 0, 5, .92) 48%, rgba(4, 0, 5, .18) 78%),
+        linear-gradient(180deg, transparent 70%, rgba(4, 0, 5, .95)),
+        url("../resources/SystemDArt.png") right 4% center / min(54vw, 670px) auto no-repeat,
+        var(--panel);
+      box-shadow: var(--shadow);
+    }
+    .masthead::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(90deg, transparent 0 69px, rgba(122, 160, 227, .055) 70px),
+        repeating-linear-gradient(0deg, transparent 0 69px, rgba(122, 160, 227, .055) 70px);
+      mix-blend-mode: screen;
+    }
+    .eyebrow {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      color: var(--gold);
+      font: 700 .73rem/1 var(--mono);
+      letter-spacing: .17em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before { content: ""; width: 2.2rem; height: 2px; background: var(--gold); }
+    .title {
+      position: relative;
+      z-index: 1;
+      max-width: 720px;
+      margin: 1.2rem 0 0;
+      font: 750 clamp(4.2rem, 10vw, 8.5rem)/.82 var(--display);
+      letter-spacing: -.055em;
+      text-transform: uppercase;
+      text-shadow: 0 12px 50px #000;
+    }
+    .title .key { color: var(--blue); }
+    .subtitle {
+      position: relative;
+      z-index: 1;
+      max-width: 680px;
+      margin: 2rem 0 0;
+      color: #c4ced9;
+      font-size: clamp(1.08rem, 2vw, 1.33rem);
+      line-height: 1.55;
+      text-wrap: balance;
+    }
+    .docmeta {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .65rem 1.25rem;
+      margin: 2rem 0 0;
+      color: var(--dim);
+      font: 600 .74rem/1.3 var(--mono);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .docmeta b { color: #dce4ed; font-weight: 600; }
+    .docmeta a { color: inherit; }
+    .mast-actions {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+      margin-top: 2rem;
+    }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.8rem;
+      padding: .65rem 1rem;
+      border: 1px solid var(--line-bright);
+      border-radius: 5px;
+      background: rgba(20, 25, 34, .82);
+      color: #fff;
+      font: 700 .75rem/1 var(--mono);
+      letter-spacing: .06em;
+      text-decoration: none;
+      text-transform: uppercase;
+      backdrop-filter: blur(10px);
+    }
+    .button.primary { border-color: var(--blue); background: var(--blue-deep); }
+    .button:hover { color: #fff; border-color: var(--cyan); transform: translateY(-1px); }
+
+    .hazard {
+      position: relative;
+      z-index: 1;
+      height: 8px;
+      margin: 3rem 0 0;
+      opacity: .8;
+      background: repeating-linear-gradient(-45deg, var(--gold) 0 11px, transparent 11px 22px);
+    }
+    .stats {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      border: 1px solid var(--line);
+      border-top: 0;
+      background: rgba(4, 0, 5, .72);
+      backdrop-filter: blur(12px);
+    }
+    .stat { min-width: 0; padding: 1rem .75rem; border-right: 1px solid var(--line); }
+    .stat:last-child { border: 0; }
+    .stat .v { color: #fff; font: 700 clamp(1.25rem, 2.6vw, 1.8rem)/1 var(--display); }
+    .stat .k { margin-top: .42rem; color: var(--dim); font: 600 .61rem/1.25 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+
+    section {
+      position: relative;
+      padding: clamp(3.8rem, 7vw, 6.7rem) clamp(1.4rem, 4vw, 4.2rem);
+      border-inline: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: rgba(4, 0, 5, .62);
+    }
+    section:nth-of-type(even) { background: rgba(13, 16, 21, .72); }
+    section::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: clamp(1.4rem, 4vw, 4.2rem);
+      width: 5.5rem;
+      height: 1px;
+      background: var(--blue);
+      box-shadow: 6rem 0 0 rgba(122, 160, 227, .35);
+    }
+    .sec-head {
+      display: flex;
+      align-items: baseline;
+      gap: .95rem;
+      margin-bottom: 2rem;
+    }
+    .sec-head .code { color: var(--gold); font: 700 .78rem/1 var(--mono); letter-spacing: .1em; }
+    .sec-head h2 {
+      margin: 0;
+      color: #fff;
+      font: 700 clamp(2rem, 4vw, 3.35rem)/1.03 var(--display);
+      letter-spacing: -.025em;
+      text-wrap: balance;
+    }
+    .link-section {
+      margin-left: auto;
+      padding: .35rem .45rem;
+      border: 0;
+      background: transparent;
+      color: var(--dim);
+      font: 700 .75rem var(--mono);
+      cursor: pointer;
+    }
+    .link-section:hover { color: var(--cyan); }
+    h3 {
+      margin: 3rem 0 .9rem;
+      color: #fff;
+      font: 700 1.17rem/1.25 var(--display);
+      letter-spacing: .015em;
+    }
+    h4 { margin: 1.4rem 0 .4rem; color: #eef4fb; font-size: .94rem; letter-spacing: .02em; }
+    p { max-width: 78ch; margin: .85rem 0; color: #b4bfcb; }
+    ul, ol { max-width: 78ch; padding-left: 1.3rem; color: #b4bfcb; }
+    li + li { margin-top: .45rem; }
+    hr { margin: 2.5rem 0; border: 0; border-top: 1px solid var(--line); }
+    .lede { color: #d6dee7; font-size: 1.13rem; line-height: 1.7; }
+    .section-kicker { color: var(--cyan); font: 700 .72rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+
+    .principles, .card-grid, .risk-grid, .link-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      margin: 1.8rem 0;
+    }
+    .principle, .card, .risk-card, .link-card {
+      padding: 1.15rem 1.2rem;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: linear-gradient(145deg, rgba(26, 32, 42, .82), rgba(13, 16, 21, .82));
+    }
+    .principle b, .card .label, .risk-card .label {
+      display: block;
+      margin-bottom: .35rem;
+      color: var(--blue);
+      font: 700 .72rem/1.2 var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .principle p, .card p, .risk-card p { margin: .35rem 0 0; font-size: .93rem; }
+
+    .callout {
+      position: relative;
+      margin: 2rem 0;
+      padding: 1.2rem 1.35rem 1.25rem 1.55rem;
+      border: 1px solid var(--line-bright);
+      border-left: 3px solid var(--blue);
+      border-radius: 0 7px 7px 0;
+      background: linear-gradient(90deg, rgba(49, 95, 159, .15), rgba(13, 16, 21, .82));
+    }
+    .callout.warning { border-left-color: var(--gold); background: linear-gradient(90deg, rgba(201, 162, 72, .13), rgba(13, 16, 21, .82)); }
+    .callout.danger { border-left-color: var(--red); background: linear-gradient(90deg, rgba(224, 106, 115, .12), rgba(13, 16, 21, .82)); }
+    .c-label { color: var(--blue); font: 700 .69rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .warning .c-label { color: var(--gold); }
+    .danger .c-label { color: var(--red); }
+    .callout p { margin: .55rem 0 0; }
+
+    .architecture {
+      display: grid;
+      grid-template-columns: 1fr 3rem 1fr;
+      gap: 1rem;
+      align-items: stretch;
+      margin: 2rem 0;
+    }
+    .arch-lane {
+      display: grid;
+      gap: .75rem;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(13, 16, 21, .78);
+    }
+    .arch-lane-title { color: var(--gold); font: 700 .7rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .node {
+      position: relative;
+      padding: .9rem 1rem;
+      border: 1px solid var(--line-bright);
+      border-radius: 5px;
+      background: var(--panel-2);
+    }
+    .node.accent { border-color: var(--blue-deep); box-shadow: inset 3px 0 var(--blue); }
+    .node.cyan { box-shadow: inset 3px 0 var(--cyan); }
+    .node.gold { box-shadow: inset 3px 0 var(--gold); }
+    .node b { display: block; color: #fff; font-size: .92rem; }
+    .node small { display: block; margin-top: .25rem; color: var(--muted); line-height: 1.45; }
+    .arch-bridge { display: grid; place-items: center; color: var(--cyan); font: 700 1.5rem var(--mono); }
+    .arch-bridge span { writing-mode: vertical-rl; text-orientation: mixed; color: var(--dim); font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; }
+
+    figure.plate {
+      margin: 2rem 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(13, 16, 21, .84);
+    }
+    .plate-body { padding: clamp(1rem, 3vw, 1.8rem); overflow-x: auto; }
+    figcaption { padding: .75rem 1rem; border-top: 1px solid var(--line); color: var(--dim); font: 600 .72rem/1.5 var(--mono); letter-spacing: .04em; }
+    figcaption b { color: var(--blue); }
+
+    .timeline { display: grid; gap: 0; min-width: 660px; }
+    .phase {
+      display: grid;
+      grid-template-columns: 3.3rem 11rem 1fr;
+      gap: 1rem;
+      align-items: stretch;
+      min-height: 5.5rem;
+    }
+    .phase .num {
+      position: relative;
+      display: grid;
+      place-items: start center;
+      padding-top: .65rem;
+      color: var(--cyan);
+      font: 700 .77rem var(--mono);
+    }
+    .phase .num::after { content: ""; position: absolute; top: 2.1rem; bottom: 0; width: 1px; background: var(--line-bright); }
+    .phase:last-child .num::after { display: none; }
+    .phase .actor { padding: .58rem 0; color: var(--gold); font: 700 .72rem/1.4 var(--mono); letter-spacing: .07em; text-transform: uppercase; }
+    .phase .action { padding: .55rem .9rem; border-top: 1px solid var(--line); color: #b6c0cb; font-size: .9rem; }
+    .phase:first-child .action { border-top-color: var(--blue); }
+
+    .registry {
+      display: grid;
+      grid-template-columns: 1fr auto 1.2fr auto 1fr;
+      gap: .75rem;
+      align-items: center;
+      min-width: 780px;
+    }
+    .registry .group { display: grid; gap: .65rem; }
+    .registry .arrow { color: var(--cyan); font: 700 1.5rem var(--mono); }
+    .registry .core { padding: 1.3rem; border: 1px solid var(--blue); border-radius: 7px; background: rgba(49, 95, 159, .16); text-align: center; }
+    .registry .core b { display: block; }
+    .registry .core small { color: var(--muted); }
+
+    .table-wrap {
+      margin: 1.5rem 0;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+    }
+    table { width: 100%; min-width: 680px; border-collapse: collapse; background: rgba(13, 16, 21, .75); font-size: .84rem; line-height: 1.48; }
+    th { padding: .72rem .8rem; border-bottom: 1px solid var(--line-bright); background: var(--panel-3); color: #fff; font: 700 .68rem/1.3 var(--mono); letter-spacing: .07em; text-align: left; text-transform: uppercase; }
+    td { padding: .68rem .8rem; border-bottom: 1px solid var(--line); color: #b4bfcb; vertical-align: top; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover td { background: rgba(122, 160, 227, .035); }
+    td:first-child { color: #e7edf5; }
+    .tgroup td { background: rgba(49, 95, 159, .12); color: var(--blue); font: 700 .67rem var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    .numcol { text-align: right; white-space: nowrap; }
+
+    .catalog {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      margin: 1.8rem 0;
+    }
+    .key-card {
+      position: relative;
+      min-height: 16rem;
+      padding: 1.2rem;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: linear-gradient(145deg, rgba(26, 32, 42, .9), rgba(10, 12, 16, .9));
+    }
+    .key-card::after { content: attr(data-index); position: absolute; right: .8rem; bottom: -.5rem; color: rgba(122, 160, 227, .06); font: 700 7rem/1 var(--display); }
+    .key-card h3 { position: relative; z-index: 1; margin: .25rem 0 .5rem; font-size: 1.25rem; }
+    .key-card p { position: relative; z-index: 1; margin: .45rem 0; font-size: .88rem; }
+    .chips { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: .4rem; margin: .8rem 0; }
+    .chip { display: inline-flex; padding: .25rem .48rem; border: 1px solid var(--line-bright); border-radius: 999px; background: rgba(122, 160, 227, .06); color: #bec9d7; font: 600 .63rem/1.2 var(--mono); }
+    .chip.blue { color: #c4d6f4; border-color: rgba(122, 160, 227, .45); }
+    .chip.gold { color: #e5ca8c; border-color: rgba(201, 162, 72, .45); }
+    .chip.cyan { color: #ace2de; border-color: rgba(85, 199, 192, .4); }
+    .key-profile {
+      position: absolute;
+      right: -1rem;
+      top: 1rem;
+      width: 8rem;
+      height: 8rem;
+      object-fit: contain;
+      opacity: .12;
+      filter: invert(78%) sepia(16%) saturate(849%) hue-rotate(182deg) brightness(90%);
+      pointer-events: none;
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(8.5rem, 1fr));
+      gap: 1.4rem;
+      min-width: 790px;
+      align-items: stretch;
+    }
+    .pipe-step { position: relative; padding: 1rem; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); }
+    .pipe-step:not(:last-child)::after { content: "→"; position: absolute; top: 50%; right: -1.1rem; transform: translateY(-50%); color: var(--cyan); font: 700 1rem var(--mono); }
+    .pipe-step b { display: block; color: #fff; font-size: .84rem; }
+    .pipe-step small { display: block; margin-top: .35rem; color: var(--muted); line-height: 1.45; }
+
+    .bars { display: grid; gap: .65rem; margin: 1.4rem 0; }
+    .bar { display: grid; grid-template-columns: 12rem 1fr 5.4rem; gap: .8rem; align-items: center; font: 600 .74rem var(--mono); }
+    .bar-track { height: .68rem; overflow: hidden; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); }
+    .bar-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--blue-deep), var(--blue)); }
+    .bar:nth-child(2) .bar-fill { background: linear-gradient(90deg, #247d78, var(--cyan)); }
+    .bar:nth-child(3) .bar-fill { background: linear-gradient(90deg, #6b4cac, var(--violet)); }
+    .bar:nth-child(4) .bar-fill { background: linear-gradient(90deg, #2b6a4b, var(--green)); }
+    .bar:nth-child(5) .bar-fill { background: linear-gradient(90deg, #8c6b26, var(--gold)); }
+    .bar-value { color: var(--muted); text-align: right; }
+
+    .module-map {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .module-group { padding: 1rem; border: 1px solid var(--line); border-radius: 7px; background: rgba(13, 16, 21, .75); }
+    .module-group h3 { margin: 0 0 .6rem; color: var(--blue); font: 700 .72rem var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    .module-group ul { margin: 0; padding: 0; list-style: none; }
+    .module-group li { display: flex; justify-content: space-between; gap: .8rem; padding: .36rem 0; border-bottom: 1px solid rgba(41, 52, 67, .65); color: var(--muted); font: .72rem/1.35 var(--mono); }
+    .module-group li:last-child { border: 0; }
+    .module-group li span:first-child { color: #dbe4ee; }
+
+    .roadmap { display: grid; gap: 1rem; counter-reset: priority; }
+    .roadmap-item { counter-increment: priority; display: grid; grid-template-columns: 3.5rem 1fr; gap: 1rem; padding: 1rem; border: 1px solid var(--line); border-radius: 7px; background: rgba(13, 16, 21, .75); }
+    .roadmap-item::before { content: "P" counter(priority); display: grid; place-items: center; align-self: start; min-height: 2.6rem; border: 1px solid var(--blue-deep); border-radius: 5px; color: var(--blue); font: 700 .75rem var(--mono); }
+    .roadmap-item h3 { margin: .1rem 0 .3rem; font-size: 1rem; }
+    .roadmap-item p { margin: 0; font-size: .9rem; }
+
+    .link-card { text-decoration: none; transition: border-color .18s ease, transform .18s ease; }
+    .link-card:hover { transform: translateY(-2px); border-color: var(--blue); color: inherit; }
+    .link-card b { display: block; color: #fff; font: 700 1rem var(--display); }
+    .link-card span { display: block; margin-top: .35rem; color: var(--muted); font-size: .86rem; }
+
+    .block {
+      margin: 1.5rem 0;
+      padding: 1.15rem;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #07090d;
+      color: #b8c8dc;
+      font: .78rem/1.65 var(--mono);
+      tab-size: 2;
+    }
+
+    .colophon {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: .8rem 1.5rem;
+      padding: 2rem clamp(1.4rem, 4vw, 4.2rem);
+      border: 1px solid var(--line);
+      border-top: 0;
+      background: var(--panel);
+      color: var(--dim);
+      font: 600 .65rem/1.4 var(--mono);
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 1160px) {
+      .shell { display: block; width: min(100% - 2rem, 1060px); }
+      .toc {
+        position: fixed;
+        inset: 3.5rem auto 0 0;
+        z-index: 75;
+        width: min(86vw, 310px);
+        max-height: none;
+        margin: 0;
+        border-radius: 0 8px 0 0;
+        transform: translateX(-104%);
+        transition: transform .22s ease;
+      }
+      .toc.open { transform: translateX(0); }
+      .mobile-bar { display: flex; }
+      .masthead { border-top: 1px solid var(--line); }
+    }
+
+    @media (max-width: 760px) {
+      body { font-size: 15px; }
+      .shell { width: 100%; }
+      .masthead { min-height: 620px; padding-top: 4.5rem; background-size: auto, auto, 520px auto, auto; }
+      .stats { grid-template-columns: repeat(3, 1fr); }
+      .stat:nth-child(3) { border-right: 0; }
+      .stat:nth-child(-n+3) { border-bottom: 1px solid var(--line); }
+      .principles, .card-grid, .risk-grid, .link-grid, .catalog, .module-map { grid-template-columns: 1fr; }
+      .architecture { grid-template-columns: 1fr; }
+      .arch-bridge { min-height: 2rem; }
+      .arch-bridge span { writing-mode: horizontal-tb; }
+      .bar { grid-template-columns: 8.3rem 1fr 4.4rem; gap: .55rem; font-size: .66rem; }
+    }
+
+    @media (max-width: 480px) {
+      .title { font-size: 3.55rem; }
+      .masthead { background-position: center, center, 70% 22%, center; }
+      .mast-actions { display: grid; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .stat:nth-child(2n) { border-right: 0; }
+      .stat:nth-child(3) { border-right: 1px solid var(--line); }
+      .stat:nth-child(-n+4) { border-bottom: 1px solid var(--line); }
+      .sec-head { align-items: flex-start; }
+      .sec-head h2 { font-size: 1.85rem; }
+      .link-section { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+
+    @media print {
+      :root { color-scheme: light; --bg: #fff; --panel: #fff; --panel-2: #f5f7fa; --panel-3: #edf1f5; --line: #c6ced8; --line-bright: #9eabb9; --text: #10151b; --muted: #43505e; --dim: #5e6975; }
+      body { background: #fff; color: #10151b; font-size: 10pt; }
+      .mobile-bar, .toc, .reading-progress, .link-section { display: none !important; }
+      .shell { display: block; width: 100%; }
+      .masthead { min-height: 0; background: #fff; color: #10151b; box-shadow: none; }
+      .title, .sec-head h2, h3, strong { color: #10151b; text-shadow: none; }
+      .subtitle, p, li, td { color: #283441; }
+      section, .colophon { break-inside: avoid-page; background: #fff !important; }
+      a { color: #174e8d; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to dossier</a>
+  <div class="reading-progress" aria-hidden="true"><span id="progress"></span></div>
+  <div class="mobile-bar">
+    <span class="mobile-brand">RealKey · TD-01</span>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="contents" aria-label="Open table of contents">☰</button>
+  </div>
+
+  <div class="shell">
+    <nav class="toc" id="contents" aria-label="Dossier contents">
+      <div class="toc-label">TD-01 · Contents</div>
+      <a href="#s00"><span class="n">00</span>Overview</a>
+      <a href="#s01"><span class="n">01</span>System context</a>
+      <a href="#s02"><span class="n">02</span>Runtime lifecycle</a>
+      <a href="#s03"><span class="n">03</span>Domain model</a>
+      <a href="#s04"><span class="n">04</span>Key systems</a>
+      <a href="#s05"><span class="n">05</span>Geometry pipeline</a>
+      <a href="#s06"><span class="n">06</span>Follower engine</a>
+      <a href="#s07"><span class="n">07</span>Browser application</a>
+      <a href="#s08"><span class="n">08</span>Assets &amp; resources</a>
+      <a href="#s09"><span class="n">09</span>Extension guide</a>
+      <a href="#s10"><span class="n">10</span>Build &amp; deployment</a>
+      <a href="#s11"><span class="n">11</span>Security &amp; safety</a>
+      <a href="#s12"><span class="n">12</span>Quality &amp; risk</a>
+      <a href="#s13"><span class="n">13</span>Operations</a>
+      <a href="#s14"><span class="n">14</span>Module reference</a>
+      <a href="#s15"><span class="n">15</span>Roadmap &amp; links</a>
+    </nav>
+
+    <main id="content">
+      <header class="masthead">
+        <div class="eyebrow">Engineering dossier · TD-01</div>
+        <h1 class="title">REAL<span class="key">KEY</span></h1>
+        <p class="subtitle">Browser-native parametric CAD for printable keys and plug followers: Python geometry, isolated worker execution, interactive 3D preview, and dual-format export—without an application server.</p>
+        <div class="docmeta">
+          <span>REV <b>v0.2.0</b></span>
+          <span>SNAPSHOT <b>68595bb · 2026-07-12</b></span>
+          <span>RUNTIME <b>Python 3.13–3.14</b></span>
+          <span>LICENSE <b>AGPL-3.0</b></span>
+        </div>
+        <div class="mast-actions">
+          <a class="button primary" href="../">Launch generator</a>
+          <a class="button" href="../docs/RealKey_Technical_Documentation.docx">Full handbook</a>
+          <a class="button" href="https://github.com/smgoldade/realkey">Source repository</a>
+        </div>
+        <div class="hazard" aria-hidden="true"></div>
+        <div class="stats" role="list" aria-label="Repository metrics">
+          <div class="stat" role="listitem"><div class="v">4,521</div><div class="k">Inspected source lines</div></div>
+          <div class="stat" role="listitem"><div class="v">22</div><div class="k">Python modules</div></div>
+          <div class="stat" role="listitem"><div class="v">10</div><div class="k">Key generators</div></div>
+          <div class="stat" role="listitem"><div class="v">11</div><div class="k">Follower presets</div></div>
+          <div class="stat" role="listitem"><div class="v">19</div><div class="k">CAD &amp; image assets</div></div>
+          <div class="stat" role="listitem"><div class="v">2</div><div class="k">Export formats</div></div>
+        </div>
+      </header>
+
+      <section id="s00">
+        <div class="sec-head"><span class="code">00</span><h2>Overview</h2></div>
+        <p class="lede"><strong>RealKey</strong> is a static, browser-hosted parametric CAD system. A user selects a lock family, profile, keyway, and bitting—or configures a plug follower—and the browser produces STL and STEP geometry locally. The repository’s defining idea is a common modeling contract with lock-specific implementations behind it.</p>
+
+        <h3>Design proposition</h3>
+        <div class="principles">
+          <div class="principle"><b>Domain plug-ins</b><p>Ten key-family classes implement a shared <code>Key</code> contract. New lock systems extend the registry instead of adding parallel applications.</p></div>
+          <div class="principle"><b>Local CAD execution</b><p>build123d runs inside a PyScript worker. Geometry settings and bitting stay in the browser unless the user shares a URL or downloads a model.</p></div>
+          <div class="principle"><b>Responsive foreground</b><p>The main browser thread owns selectors, validation feedback, query state, and Three.js preview while heavy geometry runs off-thread.</p></div>
+          <div class="principle"><b>Editable and printable output</b><p>Every successful production generation returns STEP for downstream CAD and STL for preview and common slicing workflows.</p></div>
+        </div>
+
+        <h3>What the system is—and is not</h3>
+        <ul>
+          <li><strong>It is</strong> a code-defined, asset-assisted generator for supported key and follower geometries.</li>
+          <li><strong>It is</strong> a static web application: no project-owned account system, database, upload endpoint, or geometry server exists.</li>
+          <li><strong>It is not</strong> a dimensional certification suite. Export success proves that CAD operations completed, not that a printed object will operate a physical lock.</li>
+          <li><strong>It is not</strong> a universal decoder. Each family exposes only the profiles, keyways, bitting grammar, and transformations implemented in source.</li>
+        </ul>
+
+        <div class="callout warning">
+          <div class="c-label">Snapshot boundary</div>
+          <p>This dossier describes repository version 0.2.0 at commit <code>68595bb</code>. It separates verified source facts from observed risks and recommendations. Revalidate counts, behavior, assets, and dependency assumptions whenever the codebase changes.</p>
+        </div>
+      </section>
+
+      <section id="s01">
+        <div class="sec-head"><span class="code">01</span><h2>System context</h2></div>
+        <p class="lede">RealKey is one web page containing two Python runtimes plus a JavaScript renderer. The foreground coordinates the experience; an isolated Web Worker owns the expensive CAD dependency chain and model exports.</p>
+
+        <figure class="plate">
+          <div class="plate-body">
+            <div class="architecture" role="img" aria-label="RealKey architecture with browser foreground, CAD worker, external package sources, repository assets, and generated downloads">
+              <div class="arch-lane">
+                <div class="arch-lane-title">Browser foreground</div>
+                <div class="node accent"><b>index.html + main.css</b><small>Application shell, controls, dialogs, responsive layout</small></div>
+                <div class="node accent"><b>main.py + web_main.py</b><small>PyScript state, tabs, validation, worker RPC, share URLs</small></div>
+                <div class="node cyan"><b>model_view.js</b><small>Three.js STL preview, orbit, pan, zoom, resize</small></div>
+                <div class="node"><b>Browser APIs</b><small>History, clipboard, Blob URLs, downloads, fetch</small></div>
+              </div>
+              <div class="arch-bridge" aria-hidden="true">⇄<span>structured worker calls</span></div>
+              <div class="arch-lane">
+                <div class="arch-lane-title">CAD Web Worker</div>
+                <div class="node gold"><b>worker.py</b><small>Dependency installation, registries, generation entry points</small></div>
+                <div class="node accent"><b>realkey package</b><small>Key families, follower engine, cutters, SVG and geometry helpers</small></div>
+                <div class="node cyan"><b>build123d / OCCT</b><small>Solid modeling, booleans, fillets, chamfers, STEP/STL export</small></div>
+                <div class="node"><b>Virtual filesystem</b><small>Fetched source assets and temporary exports</small></div>
+              </div>
+            </div>
+            <div class="pipeline" aria-label="External inputs and generated outputs">
+              <div class="pipe-step"><b>Remote CDNs</b><small>PyScript, Three.js, fonts, icons, Python wheels</small></div>
+              <div class="pipe-step"><b>Repository assets</b><small>SVG profiles, STEP blanks, STL placeholder, PNG guides</small></div>
+              <div class="pipe-step"><b>Parametric build</b><small>Profile + keyway + bitting or follower configuration</small></div>
+              <div class="pipe-step"><b>Browser preview</b><small>Object URL consumed by the Three.js scene</small></div>
+              <div class="pipe-step"><b>User outputs</b><small>STL, STEP, and optional share URL</small></div>
+            </div>
+          </div>
+          <figcaption><b>FIG 01</b> — EXECUTION CONTEXT. There is no project-owned server between user input and geometry generation.</figcaption>
+        </figure>
+
+        <h3>Responsibility boundaries</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Boundary</th><th>Owns</th><th>Does not own</th></tr></thead>
+          <tbody>
+            <tr><td>HTML / CSS</td><td>Semantic controls, dialogs, application layout, visual states</td><td>Geometry rules or model generation</td></tr>
+            <tr><td>Foreground Python</td><td>Tab state, selector population, validation messages, query serialization, worker orchestration</td><td>build123d solids or export serialization</td></tr>
+            <tr><td>JavaScript viewer</td><td>WebGL2 gate, STL rendering, camera and controls, viewport adaptation</td><td>STEP preview or CAD correctness</td></tr>
+            <tr><td>Worker Python</td><td>Key/follower registries, dependency setup, CAD generation, STL/STEP export</td><td>DOM manipulation and persistent server storage</td></tr>
+            <tr><td>Browser</td><td>Network policy, memory, virtual filesystem, downloads, clipboard, URL history</td><td>Physical print tolerances and lock behavior</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="s02">
+        <div class="sec-head"><span class="code">02</span><h2>Runtime lifecycle</h2></div>
+        <p class="lede">Startup is staged so the foreground can remain small while the worker installs and imports the CAD environment. Generation then becomes an RPC-style request that returns encoded file payloads.</p>
+
+        <h3>Cold start to first model</h3>
+        <figure class="plate">
+          <div class="plate-body">
+            <div class="timeline" role="img" aria-label="Sequence from static page load through worker initialization and first preview">
+              <div class="phase"><div class="num">01</div><div class="actor">Browser</div><div class="action"><strong>Parse static shell.</strong> Load CSS, PyScript core, Three.js import map, viewer module, foreground Python, and named worker declaration.</div></div>
+              <div class="phase"><div class="num">02</div><div class="actor">model_view.js</div><div class="action"><strong>Gate WebGL2.</strong> Initialize scene, camera, renderer, lighting, orbit controls, and resize handling—or show a visible compatibility error.</div></div>
+              <div class="phase"><div class="num">03</div><div class="actor">worker.py</div><div class="action"><strong>Install CAD stack.</strong> Bootstrap micropip packages and import build123d-backed generators inside the worker runtime.</div></div>
+              <div class="phase"><div class="num">04</div><div class="actor">main.py</div><div class="action"><strong>Await readiness.</strong> Resolve <code>workers['keygen']</code>, pass the page base URL, and replace build123d imports in the foreground with mocks.</div></div>
+              <div class="phase"><div class="num">05</div><div class="actor">web_main.py</div><div class="action"><strong>Construct tabs.</strong> Instantiate key and follower controllers, request registry metadata, build selectors, and attach DOM listeners.</div></div>
+              <div class="phase"><div class="num">06</div><div class="actor">Foreground</div><div class="action"><strong>Hydrate query state.</strong> Apply supported URL parameters, select the requested tab and settings, and optionally schedule automatic generation.</div></div>
+              <div class="phase"><div class="num">07</div><div class="actor">Viewer</div><div class="action"><strong>Load placeholder.</strong> Remove the startup overlay and display <code>resources/realkey.stl</code> until a production result exists.</div></div>
+              <div class="phase"><div class="num">08</div><div class="actor">User</div><div class="action"><strong>Generate.</strong> Validate inputs, call the worker, decode STL/STEP payloads, replace the preview, and enable both downloads.</div></div>
+            </div>
+          </div>
+          <figcaption><b>FIG 02</b> — STARTUP SEQUENCE. Worker readiness is the critical path; the DOM shell itself is static.</figcaption>
+        </figure>
+
+        <h3>Production generation transaction</h3>
+        <ol>
+          <li>The active tab normalizes form values into a serializable parameter set.</li>
+          <li>Foreground validation checks the selected generator’s published profiles, keyways, bitting grammar, lengths, and follower inputs.</li>
+          <li>The generate button is disabled and the viewer exposes a generating state.</li>
+          <li>The worker locates the class in <code>Key.key_registry</code> or the follower registries, fetches lazy resources, and creates a build123d <code>Part</code>.</li>
+          <li>The worker exports temporary STL and STEP files, reads their bytes, Base64-encodes them, and returns a transport-safe result.</li>
+          <li>The foreground creates Blob URLs, replaces the Three.js model, updates the description, and enables download buttons.</li>
+          <li>The URL state can be updated for reproducibility; a share link may include settings and optional automatic generation.</li>
+        </ol>
+
+        <div class="callout">
+          <div class="c-label">Concurrency model</div>
+          <p>The worker protects the UI from long synchronous CAD operations, but it is still one generation runtime. The design should treat requests as serialized unless explicit cancellation, request IDs, and stale-result suppression are added.</p>
+        </div>
+      </section>
+
+      <section id="s03">
+        <div class="sec-head"><span class="code">03</span><h2>Domain model</h2></div>
+        <p class="lede">RealKey’s extensibility is registry-driven. Importing a concrete subclass makes it discoverable; the UI and worker operate against class methods and stable configuration structures instead of family-specific branches.</p>
+
+        <figure class="plate">
+          <div class="plate-body">
+            <div class="registry" role="img" aria-label="Registry-driven model connecting UI selectors through abstract contracts to concrete key and follower implementations">
+              <div class="group">
+                <div class="node"><b>KeyTab</b><small>key / profile / keyway / bitting</small></div>
+                <div class="node"><b>FollowerTab</b><small>preset / dimensions / top / bottom</small></div>
+              </div>
+              <div class="arrow" aria-hidden="true">→</div>
+              <div class="core"><b>Published class contract</b><small>registry tag · option metadata · validation · generation · description</small></div>
+              <div class="arrow" aria-hidden="true">→</div>
+              <div class="group">
+                <div class="node accent"><b>10 Key subclasses</b><small>lock-family CAD strategies</small></div>
+                <div class="node cyan"><b>9 FollowerEnd subclasses</b><small>end-feature plug-ins</small></div>
+                <div class="node gold"><b>11 follower presets</b><small>named starting configurations</small></div>
+              </div>
+            </div>
+          </div>
+          <figcaption><b>FIG 03</b> — REGISTRY MODEL. Import-time registration keeps discovery separate from construction.</figcaption>
+        </figure>
+
+        <h3><code>Key</code> contract</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Member</th><th>Purpose</th><th>Consumer</th></tr></thead>
+          <tbody>
+            <tr><td><code>tag()</code></td><td>Stable selector and registry identifier for the concrete family</td><td>Worker registry, URL state, KeyTab</td></tr>
+            <tr><td><code>name()</code></td><td>Human-readable family label</td><td>Selector and generated description</td></tr>
+            <tr><td><code>profiles()</code></td><td>Supported blade/profile options, sometimes grouped</td><td>Profile selector and validation</td></tr>
+            <tr><td><code>keyways()</code></td><td>Supported keyway variants</td><td>Keyway selector and blank construction</td></tr>
+            <tr><td><code>bitting_instructions()</code></td><td>User-facing grammar and advanced help</td><td>Foreground information panel</td></tr>
+            <tr><td><code>validate_bitting()</code></td><td>Family-specific syntax, length, and depth checks</td><td>Foreground and worker defense</td></tr>
+            <tr><td><code>blank()</code></td><td>Build or load the uncut solid</td><td>Generator implementation</td></tr>
+            <tr><td><code>generate()</code></td><td>Apply cutters/features and return a build123d part</td><td>worker.py</td></tr>
+          </tbody>
+        </table></div>
+
+        <h3>Geometry service layer</h3>
+        <div class="card-grid">
+          <div class="card"><span class="label">key_cutters.py</span><p>Reusable cutter primitives for common edge, groove, dimple, and lever-cut operations.</p></div>
+          <div class="card"><span class="label">svgtools.py</span><p>Loads SVG paths, resolves labels, scales profiles, and converts planar source data into build123d faces or sketches.</p></div>
+          <div class="card"><span class="label">geom_tools.py</span><p>Shared bounding-box and placement utilities used to orient, size, and align solids.</p></div>
+          <div class="card"><span class="label">resource_fetcher.py</span><p>Resolves same-origin asset URLs and lazily copies binary/text resources into the worker’s virtual filesystem.</p></div>
+        </div>
+      </section>
+
+      <section id="s04">
+        <div class="sec-head"><span class="code">04</span><h2>Supported key systems</h2></div>
+        <p class="lede">The ten registered generators do not share one cutting algorithm. Their common contract hides distinct manufacturing geometries: edge cuts, dimple fields, side rows, rotating elements, lever gates, and profile-dependent blank sources.</p>
+
+        <div class="catalog">
+          <article class="key-card" data-index="01">
+            <img class="key-profile" src="../resources/ASSA/Desmo.svg" alt="" aria-hidden="true">
+            <span class="section-kicker">ASSA</span><h3>Desmo</h3>
+            <div class="chips"><span class="chip blue">SVG blank</span><span class="chip cyan">side bitting</span><span class="chip gold">rotating elements</span></div>
+            <p>Builds from the Desmo SVG profile and interprets paired side codes for the system’s characteristic rotating-element geometry.</p>
+            <p><strong>Maintenance focus:</strong> preserve bilateral datum symmetry and test every allowed code against a known decoding fixture.</p>
+          </article>
+
+          <article class="key-card" data-index="02">
+            <img class="key-profile" src="../resources/DOM/SystemD.svg" alt="" aria-hidden="true">
+            <span class="section-kicker">DOM</span><h3>System D</h3>
+            <div class="chips"><span class="chip blue">SVG + STEP</span><span class="chip cyan">dimple rows</span><span class="chip">keyway variants</span></div>
+            <p>Uses an SVG-derived or STEP-backed blank depending on keyway and applies dimple patterns along family-specific rows and offsets.</p>
+            <p><strong>Maintenance focus:</strong> STEP orientation and units are part of the implicit interface; replacing the file requires dimensional regression checks.</p>
+          </article>
+
+          <article class="key-card" data-index="03">
+            <img class="key-profile" src="../resources/MIWA/SR.svg" alt="" aria-hidden="true">
+            <span class="section-kicker">MIWA</span><h3>SR</h3>
+            <div class="chips"><span class="chip blue">SVG blank</span><span class="chip cyan">multi-row</span><span class="chip gold">decode guides</span></div>
+            <p>Models the SR profile with multiple bitting rows. Two PNG references document key and lock decoding conventions for maintainers and users.</p>
+            <p><strong>Maintenance focus:</strong> keep row ordering, direction, and depth tables synchronized with the visual decoding guides.</p>
+          </article>
+
+          <article class="key-card" data-index="04">
+            <img class="key-profile" src="../resources/Opnus/Memolis.svg" alt="" aria-hidden="true">
+            <span class="section-kicker">Opnus</span><h3>Memolis</h3>
+            <div class="chips"><span class="chip blue">SVG blank</span><span class="chip cyan">lofted cutters</span><span class="chip">paired halves</span></div>
+            <p>Splits the bitting into two sides and uses a lofted three-dimensional cutter strategy rather than only planar edge operations.</p>
+            <p><strong>Observed gap:</strong> validation currently permits odd total lengths even though generation divides the sequence into halves.</p>
+          </article>
+
+          <article class="key-card" data-index="05">
+            <img class="key-profile" src="../resources/Paclock/PR1.svg" alt="" aria-hidden="true">
+            <span class="section-kicker">Paclock</span><h3>PR1</h3>
+            <div class="chips"><span class="chip blue">SVG blank</span><span class="chip cyan">edge cut</span><span class="chip">profile length</span></div>
+            <p>Creates a conventional edge-cut key from the PR1 SVG outline with profile-dependent maximum bitting length and reusable edge cutters.</p>
+            <p><strong>Maintenance focus:</strong> fixture tests should pin shoulder, spacing, depth increments, and tip clearance.</p>
+          </article>
+
+          <article class="key-card" data-index="06">
+            <span class="section-kicker">Sargent &amp; Greenleaf</span><h3>Safe Deposit Box</h3>
+            <div class="chips"><span class="chip blue">5 STEP blanks</span><span class="chip cyan">lever cuts</span><span class="chip gold">renter / guard</span></div>
+            <p>Selects one of five authoritative STEP blanks and subtracts rectangular lever gates, including throat and optional guard-tip entries.</p>
+            <p><strong>Observed risk:</strong> one over-length error path indexes a grouped profile mapping as if it were flat; targeted tests should pin the intended message.</p>
+          </article>
+
+          <article class="key-card" data-index="07">
+            <img class="key-profile" src="../resources/Schlage/Everest.svg" alt="" aria-hidden="true">
+            <span class="section-kicker">Schlage</span><h3>Everest</h3>
+            <div class="chips"><span class="chip blue">SVG blank</span><span class="chip cyan">edge cut</span><span class="chip gold">side feature</span></div>
+            <p>Builds the Everest family blank and applies the conventional top bitting plus Everest-specific side geometry.</p>
+            <p><strong>Maintenance focus:</strong> preserve the relationship between the profile outline, side feature, shoulder datum, and cutter spacing.</p>
+          </article>
+
+          <article class="key-card" data-index="08">
+            <img class="key-profile" src="../resources/Schlage/Everest.svg" alt="" aria-hidden="true">
+            <span class="section-kicker">Schlage</span><h3>Everest SL / SFIC</h3>
+            <div class="chips"><span class="chip blue">SVG blank</span><span class="chip cyan">SFIC geometry</span><span class="chip">variant rules</span></div>
+            <p>Extends the Everest modeling family for SL and small-format interchangeable-core configurations with variant-specific geometry.</p>
+            <p><strong>Maintenance focus:</strong> keep selector names and class tags stable because shared URLs depend on them.</p>
+          </article>
+
+          <article class="key-card" data-index="09">
+            <img class="key-profile" src="../resources/Schlage/Everest.svg" alt="" aria-hidden="true">
+            <span class="section-kicker">Schlage</span><h3>Everest Primus</h3>
+            <div class="chips"><span class="chip blue">SVG blank</span><span class="chip cyan">top + side</span><span class="chip gold">Primus feature</span></div>
+            <p>Combines the primary edge bitting with the Primus side mechanism, making independent validation and cutter placement especially important.</p>
+            <p><strong>Maintenance focus:</strong> test top and side code boundaries separately before combinatorial fixture sampling.</p>
+          </article>
+
+          <article class="key-card" data-index="10">
+            <img class="key-profile" src="../resources/VSR/2000.svg" alt="" aria-hidden="true">
+            <span class="section-kicker">VSR</span><h3>2000</h3>
+            <div class="chips"><span class="chip blue">SVG + STEP</span><span class="chip cyan">multiple rows</span><span class="chip gold">advanced grammar</span></div>
+            <p>Uses a STEP seed and SVG profile support for a multi-row bitting model with active-top and side-row conventions.</p>
+            <p><strong>Observed divergence:</strong> explanatory text describes narrower depth ranges than <code>validate_bitting()</code> currently accepts.</p>
+          </article>
+        </div>
+
+        <div class="callout warning">
+          <div class="c-label">Compatibility contract</div>
+          <p>Class tags, profile labels, and keyway labels are serialized into share URLs. Renaming them is a data migration, not a cosmetic change. Prefer aliases and explicit URL-version handling when identifiers must evolve.</p>
+        </div>
+      </section>
+
+      <section id="s05">
+        <div class="sec-head"><span class="code">05</span><h2>Geometry pipeline</h2></div>
+        <p class="lede">A generated key is the result of a repeatable transformation chain: select a blank source, establish datums, build cutters from validated bitting, apply boolean operations and finishing features, then serialize the same part to two formats.</p>
+
+        <figure class="plate">
+          <div class="plate-body">
+            <div class="pipeline" role="img" aria-label="Geometry pipeline from source blank through normalized solid and cutters to finishing and exports">
+              <div class="pipe-step"><b>1 · Source blank</b><small>SVG outline, authoritative STEP solid, or programmatic primitive</small></div>
+              <div class="pipe-step"><b>2 · Normalize</b><small>Scale, orient, extrude, and align to family datums</small></div>
+              <div class="pipe-step"><b>3 · Build cutters</b><small>Translate validated codes into depths, rows, angles, and spacing</small></div>
+              <div class="pipe-step"><b>4 · Finish part</b><small>Subtract or add features; apply chamfers, fillets, and tip work</small></div>
+              <div class="pipe-step"><b>5 · Serialize</b><small>Export identical result to STL mesh and STEP B-rep</small></div>
+            </div>
+          </div>
+          <figcaption><b>FIG 04</b> — MODELING PIPELINE. Geometry correctness depends on source asset units and family datums as much as cutter math.</figcaption>
+        </figure>
+
+        <h3>Blank-source strategies</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Strategy</th><th>Families</th><th>Advantages</th><th>Maintenance hazards</th></tr></thead>
+          <tbody>
+            <tr><td>SVG-derived profile</td><td>ASSA, MIWA, Opnus, Paclock, Schlage; DOM/VSR support</td><td>Reviewable, compact, easy to extrude and parameterize</td><td>Path labels, scale, winding, and origin are part of the source contract</td></tr>
+            <tr><td>STEP seed solid</td><td>DOM current keyway, S&amp;G families, VSR</td><td>Preserves complex manufactured geometry</td><td>Units, orientation, topology, and hidden construction assumptions are implicit</td></tr>
+            <tr><td>Programmatic primitive</td><td>Follower body and end features</td><td>Fully parametric; no external blank file</td><td>Invalid dimension combinations can produce zero or negative remaining length</td></tr>
+          </tbody>
+        </table></div>
+
+        <h3>Reusable cutter concepts</h3>
+        <div class="card-grid">
+          <div class="card"><span class="label">Edge cutter</span><p>Places depth cuts along a longitudinal spacing schedule, commonly used by conventional blade bitting.</p></div>
+          <div class="card"><span class="label">Dimple cutter</span><p>Creates positioned pockets across multiple rows, faces, or angles with family-specific diameter and depth tables.</p></div>
+          <div class="card"><span class="label">Groove / side cutter</span><p>Models sidebar, side-bitting, track, or rotating-element features separately from the primary edge.</p></div>
+          <div class="card"><span class="label">Lever cutter</span><p>Builds rectangular safe-deposit gates from center coordinate, depth, and width, plus optional throat/tip entries.</p></div>
+        </div>
+
+        <h3>Geometry acceptance criteria</h3>
+        <ul>
+          <li>The result is a valid solid or explicitly supported compound; boolean operations do not leave accidental fragments.</li>
+          <li>Bounding boxes, shoulder position, blade length, thickness, and critical row offsets match family fixtures.</li>
+          <li>Blank generation with empty bitting preserves the uncut model and exports successfully.</li>
+          <li>Minimum and maximum depths remain within the blank envelope and do not violate tip or shoulder constraints.</li>
+          <li>STL and STEP describe the same final part; mesh tessellation remains adequate for the intended tolerance.</li>
+        </ul>
+      </section>
+
+      <section id="s06">
+        <div class="sec-head"><span class="code">06</span><h2>Plug follower engine</h2></div>
+        <p class="lede">Followers use a composition model rather than lock-specific generator classes: a cylindrical body is combined with independently selected top and bottom end plug-ins. Named presets populate a configuration that remains editable.</p>
+
+        <h3>Construction algorithm</h3>
+        <ol>
+          <li>Resolve the selected preset or custom dimensions into total length, diameter, end types, and end-specific parameters.</li>
+          <li>Validate required values, end compatibility, units, and the parameter schema published by each <code>FollowerEnd</code>.</li>
+          <li>Generate top and bottom end solids and determine the axial length consumed by each.</li>
+          <li>Create the remaining central cylinder, align each end to its face, and rotate the far end into the expected orientation.</li>
+          <li>Union the components, apply requested chamfers or flats, and return one exportable part.</li>
+        </ol>
+
+        <h3>Named presets</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Selector entry</th><th>Purpose</th><th>Configuration behavior</th></tr></thead>
+          <tbody>
+            <tr><td>Custom</td><td>Unconstrained starting point</td><td>User supplies all primary dimensions and both ends</td></tr>
+            <tr><td>iNAHO Tierkey Short</td><td>50 mm × 9.45 mm</td><td>Tongue top end; pin-slot bottom end</td></tr>
+            <tr><td>Kaba Ace</td><td>50 mm × 9.95 mm</td><td>Cross top end; pin-slot bottom end</td></tr>
+            <tr><td>Keso 2000S</td><td>50 mm × 10.95 mm</td><td>Tongue top end; pin-slot bottom end</td></tr>
+            <tr><td>Schlage</td><td>70 mm × 0.495 in</td><td>Schlage top end; configurable slot bottom end</td></tr>
+            <tr><td>West 917</td><td>60 mm × 11.95 mm</td><td>Tongue top end; pin-slot bottom end</td></tr>
+            <tr><td>Generic 10mm</td><td>70 mm × 10 mm</td><td>Slot top end; flat bottom end</td></tr>
+            <tr><td>Generic 12.5mm</td><td>70 mm × 12.5 mm</td><td>Slot top end; flat bottom end</td></tr>
+            <tr><td>Generic 12.7mm</td><td>70 mm × 12.7 mm</td><td>Slot top end; flat bottom end</td></tr>
+            <tr><td>Generic 12.8mm</td><td>70 mm × 12.8 mm</td><td>Slot top end; flat bottom end</td></tr>
+            <tr><td>Generic 14mm</td><td>70 mm × 14 mm</td><td>Slot top end; flat bottom end</td></tr>
+          </tbody>
+        </table></div>
+
+        <h3>End plug-ins</h3>
+        <div class="chips" aria-label="Registered follower end types">
+          <span class="chip blue">Flat End</span><span class="chip blue">Slot</span><span class="chip cyan">V Slot</span><span class="chip cyan">Tongue</span><span class="chip gold">Cross</span><span class="chip gold">Pin Slot</span><span class="chip">Hollow</span><span class="chip">Slotted Hollow</span><span class="chip">Schlage</span>
+        </div>
+        <p>Each end implementation publishes its tag, human-readable name, parameter specification, validation rules, consumed axial length, and geometry function. The tab controller builds end-specific inputs dynamically from that metadata.</p>
+
+        <div class="callout warning">
+          <div class="c-label">Follower invariants to enforce</div>
+          <p>Total length must remain greater than the two ends’ combined axial consumption; rotation should not assume a nonempty configuration; temporary chamfer adjustments should not mutate reusable configuration state. These are high-value unit and property-test targets.</p>
+        </div>
+      </section>
+
+      <section id="s07">
+        <div class="sec-head"><span class="code">07</span><h2>Browser application</h2></div>
+        <p class="lede">The web layer is deliberately small: semantic HTML, one stylesheet, a Three.js viewer module, foreground PyScript controllers, and a named worker. Its main architectural challenge is crossing DOM wrappers, worker proxies, JavaScript objects, and Python values safely.</p>
+
+        <h3>Foreground ownership map</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Surface</th><th>Primary code</th><th>State / behavior</th></tr></thead>
+          <tbody>
+            <tr><td>Application shell</td><td><code>index.html</code></td><td>Tabs, inputs, canvas, dialogs, buttons, loader, status, static help</td></tr>
+            <tr><td>Visual system</td><td><code>main.css</code></td><td>Dark layout, responsive stacking, control states, dialogs, generation feedback</td></tr>
+            <tr><td>Boot handoff</td><td><code>main.py</code></td><td>Worker readiness, foreground mocks, worker base URL, application entry</td></tr>
+            <tr><td>Application state</td><td><code>web_main.py</code></td><td>Tab registry, active tab, query parsing, placeholder load, generation orchestration</td></tr>
+            <tr><td>Reusable DOM bridge</td><td><code>web_core.py</code>, <code>tab.py</code></td><td>Element wrappers, values, events, units, tab contract</td></tr>
+            <tr><td>Key workflow</td><td><code>tab_key.py</code></td><td>Registry metadata, dependent selectors, bitting instructions, generate payload</td></tr>
+            <tr><td>Follower workflow</td><td><code>tab_follower.py</code></td><td>Preset hydration, dimensions, dynamic end inputs, generate payload</td></tr>
+            <tr><td>3D preview</td><td><code>model_view.js</code></td><td>WebGL2 validation, scene, STL loader, camera fit, orbit/pan/zoom</td></tr>
+          </tbody>
+        </table></div>
+
+        <h3>Worker API surface</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Call</th><th>Input</th><th>Output / effect</th></tr></thead>
+          <tbody>
+            <tr><td><code>set_base_url(url)</code></td><td>Page base URL</td><td>Configures lazy same-origin resource resolution</td></tr>
+            <tr><td><code>get_keys()</code></td><td>None</td><td>Serializable registry metadata for selector construction</td></tr>
+            <tr><td><code>generate_key(tag, profile, keyway, bitting)</code></td><td>Selected identifiers and normalized bitting</td><td>Generated description plus Base64 STL/STEP</td></tr>
+            <tr><td><code>get_followers()</code></td><td>None</td><td>Preset and end registry metadata</td></tr>
+            <tr><td><code>generate_follower(config)</code></td><td>Dimensions and nested end configurations</td><td>Generated description plus Base64 STL/STEP</td></tr>
+          </tbody>
+        </table></div>
+
+        <h3>Share URL model</h3>
+        <p>Query parameters can encode the active tab, the selected key/follower configuration, whether values should be included, and whether generation should run automatically. This is convenient reproducibility, but URL state is public to browser history, copied messages, analytics operated by a hosting provider, screenshots, and referrer behavior.</p>
+
+        <pre class="block">?tab=key
+&amp;key=&lt;registry-tag&gt;
+&amp;profile=&lt;profile-label&gt;
+&amp;keyway=&lt;keyway-label&gt;
+&amp;bitting=&lt;family-specific-code&gt;
+&amp;generate=true
+
+?tab=follower
+&amp;follower=&lt;preset-tag&gt;
+&amp;length=&lt;value&gt;&amp;diameter=&lt;value&gt;&amp;unit=mm
+&amp;top=&lt;end-tag&gt;&amp;bottom=&lt;end-tag&gt;…</pre>
+
+        <h3>Integration-sensitive areas</h3>
+        <div class="risk-grid">
+          <div class="risk-card"><span class="label">PyScript wrappers</span><p>Unit changes compare selected option wrappers with raw DOM elements. A browser-level test is required to prove equality behaves as assumed.</p></div>
+          <div class="risk-card"><span class="label">Blob lifetime</span><p>The asynchronous STL load and immediate object-URL revocation should be verified across browsers; revocation is safest after loader completion.</p></div>
+          <div class="risk-card"><span class="label">Fallback tab</span><p><code>get_selected_tab()</code> falls back to <code>tabs['keys']</code>, while registered dictionary keys are <code>key</code> and <code>follower</code>.</p></div>
+          <div class="risk-card"><span class="label">Stale requests</span><p>No request identifier is visible at the public boundary. Rapid repeated generation needs an explicit last-request-wins rule.</p></div>
+        </div>
+      </section>
+
+      <section id="s08">
+        <div class="sec-head"><span class="code">08</span><h2>Assets &amp; resources</h2></div>
+        <p class="lede">The repository contains 19 runtime assets totaling approximately 5.49 MB: eight SVG files, seven STEP models, three PNG images, and one STL placeholder. Paths and embedded labels are source-level contracts.</p>
+
+        <h3>Resource lifecycle</h3>
+        <figure class="plate">
+          <div class="plate-body">
+            <div class="pipeline" role="img" aria-label="Resource pipeline from repository through HTTP fetch and worker virtual filesystem into CAD import and generated part">
+              <div class="pipe-step"><b>Static host</b><small>Serves versioned repository asset path</small></div>
+              <div class="pipe-step"><b>resource_fetcher</b><small>Resolve base URL and fetch lazily</small></div>
+              <div class="pipe-step"><b>Worker filesystem</b><small>Write text or binary bytes to a local virtual path</small></div>
+              <div class="pipe-step"><b>CAD importer</b><small>SVG path extraction or STEP solid import</small></div>
+              <div class="pipe-step"><b>Generated part</b><small>Apply family datums and bitting operations</small></div>
+            </div>
+          </div>
+          <figcaption><b>FIG 05</b> — RESOURCE PIPELINE. Assets are fetched on demand inside the CAD worker, not bundled into Python modules.</figcaption>
+        </figure>
+
+        <h3>Complete inventory</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Path</th><th>Type</th><th>Runtime role</th></tr></thead>
+          <tbody>
+            <tr class="tgroup"><td colspan="3">SVG profiles and UI assets</td></tr>
+            <tr><td><code>resources/ASSA/Desmo.svg</code></td><td>SVG</td><td>ASSA Desmo blank/profile geometry</td></tr>
+            <tr><td><code>resources/DOM/SystemD.svg</code></td><td>SVG</td><td>DOM System D profile geometry</td></tr>
+            <tr><td><code>resources/MIWA/SR.svg</code></td><td>SVG</td><td>MIWA SR profile geometry</td></tr>
+            <tr><td><code>resources/Opnus/Memolis.svg</code></td><td>SVG</td><td>Opnus Memolis blank/profile geometry</td></tr>
+            <tr><td><code>resources/Paclock/PR1.svg</code></td><td>SVG</td><td>Paclock PR1 blank/profile geometry</td></tr>
+            <tr><td><code>resources/Schlage/Everest.svg</code></td><td>SVG</td><td>Shared Schlage Everest-family geometry</td></tr>
+            <tr><td><code>resources/VSR/2000.svg</code></td><td>SVG</td><td>VSR 2000 profile support</td></tr>
+            <tr><td><code>resources/plug_follower.svg</code></td><td>SVG</td><td>Follower-tab icon in the application shell</td></tr>
+            <tr class="tgroup"><td colspan="3">Authoritative STEP seed solids</td></tr>
+            <tr><td><code>resources/DOM/SystemD_B1.step</code></td><td>STEP</td><td>DOM System D B1/current-keyway blank</td></tr>
+            <tr><td><code>resources/SargentAndGreenleaf/60.step</code></td><td>STEP</td><td>S&amp;G 60 renter blank</td></tr>
+            <tr><td><code>resources/SargentAndGreenleaf/87H.step</code></td><td>STEP</td><td>S&amp;G 87H / 87H seven-cut guard blank</td></tr>
+            <tr><td><code>resources/SargentAndGreenleaf/96.step</code></td><td>STEP</td><td>S&amp;G 96 / 96 seven-cut renter blank</td></tr>
+            <tr><td><code>resources/SargentAndGreenleaf/9609.step</code></td><td>STEP</td><td>S&amp;G 9609 guard blank</td></tr>
+            <tr><td><code>resources/SargentAndGreenleaf/SY3B.step</code></td><td>STEP</td><td>S&amp;G SY3B guard blank</td></tr>
+            <tr><td><code>resources/VSR/2000-1-1.step</code></td><td>STEP</td><td>VSR 2000 seed solid</td></tr>
+            <tr class="tgroup"><td colspan="3">Reference images and placeholder</td></tr>
+            <tr><td><code>resources/MIWA/SR_Key_Decode.png</code></td><td>PNG</td><td>MIWA SR key-decoding reference</td></tr>
+            <tr><td><code>resources/MIWA/SR_Lock_Decode.png</code></td><td>PNG</td><td>MIWA SR lock-decoding reference</td></tr>
+            <tr><td><code>resources/SystemDArt.png</code></td><td>PNG</td><td>Project visual and social/hero art</td></tr>
+            <tr><td><code>resources/realkey.stl</code></td><td>STL</td><td>Initial viewer placeholder before generation</td></tr>
+          </tbody>
+        </table></div>
+
+        <div class="callout">
+          <div class="c-label">Asset change protocol</div>
+          <p>Record provenance and units; preserve SVG labels expected by code; compare bounding boxes and datums; generate minimum, maximum, and blank fixtures; inspect both exports; and treat a changed STEP file as a code change requiring review.</p>
+        </div>
+      </section>
+
+      <section id="s09">
+        <div class="sec-head"><span class="code">09</span><h2>Extension guide</h2></div>
+        <p class="lede">The safest extension path starts with a tested domain class and resource contract, then allows the existing registries and generic UI to discover it. Avoid family-specific branches in <code>worker.py</code> or tab controllers unless the common contract truly cannot represent the feature.</p>
+
+        <h3>Add a key family</h3>
+        <ol>
+          <li><strong>Define the grammar.</strong> Specify profiles, keyways, bitting rows, symbols, minimum/maximum length, depth tables, and blank behavior before writing geometry.</li>
+          <li><strong>Prepare assets.</strong> Normalize SVG/STEP units, origin, orientation, labels, and provenance. Keep resources under a family-specific directory.</li>
+          <li><strong>Subclass <code>Key</code>.</strong> Implement a stable tag, display name, metadata methods, instructions, validation, blank construction, and generation.</li>
+          <li><strong>Register by import.</strong> Add the module to the worker import path so subclass registration occurs during startup.</li>
+          <li><strong>Prove fixtures.</strong> Test blank, shortest and longest accepted sequences, every depth, invalid characters, invalid lengths, multiple profiles/keyways, and known physical/reference dimensions.</li>
+          <li><strong>Verify the generic UI.</strong> Confirm dependent selectors, help text, shared URL round-trip, automatic generation, preview, and both downloads.</li>
+          <li><strong>Document the family.</strong> Update this catalog, the asset inventory, and the handbook snapshot.</li>
+        </ol>
+
+        <h3>Add a follower end or preset</h3>
+        <div class="card-grid">
+          <div class="card"><span class="label">New end</span><p>Publish a stable tag, label, parameter schema, validation, axial length, and geometry function. Test both top and bottom orientation and combinations with every compatible end.</p></div>
+          <div class="card"><span class="label">New preset</span><p>Add only named defaults: dimensions, units, and selected end configurations. A preset should remain editable and should not bypass end validation.</p></div>
+        </div>
+
+        <h3>Change checklist</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Change</th><th>Required verification</th></tr></thead>
+          <tbody>
+            <tr><td>Registry tag or selector label</td><td>Legacy share URLs, aliases, URL serialization, query hydration</td></tr>
+            <tr><td>SVG path or label</td><td>Path lookup, scale, winding, extrusion, bounding box, all dependent generators</td></tr>
+            <tr><td>STEP seed</td><td>Units, orientation, topology, reference datums, minimum/maximum cuts, exports</td></tr>
+            <tr><td>Cutter math</td><td>Every depth/code, adjacent cuts, extremes, blank envelope, known fixtures</td></tr>
+            <tr><td>Worker return contract</td><td>Foreground decoding, stale result behavior, error display, both Blob downloads</td></tr>
+            <tr><td>DOM identifier</td><td>All Python and JavaScript lookups; keyboard labels; help and dialog triggers</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="s10">
+        <div class="sec-head"><span class="code">10</span><h2>Build &amp; deployment</h2></div>
+        <p class="lede">RealKey has two delivery surfaces: a normal Python package for direct imports and a static browser application. The web runtime still requires HTTP serving; opening <code>index.html</code> directly cannot reliably satisfy modules, workers, or resource fetches.</p>
+
+        <h3>Version contract</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Component</th><th>Pinned / declared version</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td>Python</td><td><code>&gt;=3.13,&lt;3.15</code></td><td>Package metadata and local development runtime</td></tr>
+            <tr><td>build123d</td><td><code>0.11.0</code></td><td>Parametric CAD API backed by OCCT</td></tr>
+            <tr><td>ocp_vscode</td><td><code>3.4.0</code> development</td><td>Optional local CAD visualization</td></tr>
+            <tr><td>PyScript</td><td><code>2026.6.1</code></td><td>Foreground and worker Python in the browser</td></tr>
+            <tr><td>Three.js</td><td><code>0.184.0</code></td><td>STL preview and camera controls</td></tr>
+            <tr><td>Font Awesome</td><td><code>7.0.1</code></td><td>Application-shell icons</td></tr>
+          </tbody>
+        </table></div>
+
+        <h3>Local browser run</h3>
+        <pre class="block"># from the repository root
+python -m http.server 8000
+
+# then open
+http://localhost:8000/</pre>
+        <p>The selected server must preserve relative paths, serve WASM and module assets with usable MIME types, allow worker loading, and permit outbound access to configured CDNs. Cross-origin isolation is not currently declared as a requirement, but deployment headers should be tested whenever the CAD/WASM stack changes.</p>
+
+        <h3>Static-host contract</h3>
+        <ul>
+          <li>Publish the repository root so <code>index.html</code>, <code>config.json</code>, Python sources, and <code>resources/</code> preserve their relative layout.</li>
+          <li>Do not rewrite requests for SVG, STEP, STL, PNG, Python, JavaScript, JSON, or worker paths to the HTML shell.</li>
+          <li>Use HTTPS in production for browser API consistency and integrity.</li>
+          <li>Apply a Content Security Policy only after enumerating PyScript, Three.js, wheel, font, icon, worker, Blob, and WASM requirements.</li>
+          <li>Pin third-party versions and consider self-hosting or subresource-integrity coverage where the loader supports it.</li>
+        </ul>
+
+        <div class="callout warning">
+          <div class="c-label">Current assurance gap</div>
+          <p>The snapshot has no automated test directory and no CI workflow. A deployment can be syntactically valid while a key family, resource path, CDN, browser bridge, or physical dimension is wrong. The minimum release gate should include static checks, Python unit tests, browser integration tests, representative CAD fixtures, and asset audits.</p>
+        </div>
+      </section>
+
+      <section id="s11">
+        <div class="sec-head"><span class="code">11</span><h2>Security, privacy &amp; safety</h2></div>
+        <p class="lede">Local execution reduces server-side exposure, but it does not make the system trustless. Code and packages arrive from multiple origins, shared URLs can reveal settings, and generated objects have real-world mechanical consequences.</p>
+
+        <h3>Trust boundaries</h3>
+        <div class="architecture">
+          <div class="arch-lane">
+            <div class="arch-lane-title">Trusted project surface</div>
+            <div class="node accent"><b>Repository HTML, Python, JS, CSS</b><small>Controls generation logic and user experience</small></div>
+            <div class="node cyan"><b>Versioned CAD assets</b><small>Directly influence generated dimensions and topology</small></div>
+            <div class="node"><b>User configuration</b><small>Profile, keyway, bitting, follower parameters</small></div>
+          </div>
+          <div class="arch-bridge" aria-hidden="true">⇄<span>browser security boundary</span></div>
+          <div class="arch-lane">
+            <div class="arch-lane-title">External / consequential surface</div>
+            <div class="node gold"><b>CDNs and package indexes</b><small>Executable code, modules, fonts, icons, wheels</small></div>
+            <div class="node"><b>URL and browser history</b><small>May retain shared settings and bitting</small></div>
+            <div class="node"><b>Downloaded CAD and printed parts</b><small>Leave browser controls and enter physical workflows</small></div>
+          </div>
+        </div>
+
+        <h3>Security controls and recommendations</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Area</th><th>Current posture</th><th>Recommended control</th></tr></thead>
+          <tbody>
+            <tr><td>Server data</td><td>No project-owned application server or database</td><td>Preserve static/local architecture unless a server feature has a clear threat model</td></tr>
+            <tr><td>Share links</td><td>Optional settings and automatic generation in query parameters</td><td>Warn before copying sensitive bitting; support redacted links and versioned schemas</td></tr>
+            <tr><td>Dependency supply chain</td><td>Browser loads multiple pinned remote resources</td><td>Self-host critical runtime files where practical; add provenance/SBOM and integrity review</td></tr>
+            <tr><td>Resource fetching</td><td>Base URL is set by foreground and assets are fetched lazily</td><td>Restrict fetches to expected same-origin paths and reject traversal or unexpected schemes</td></tr>
+            <tr><td>Downloads</td><td>Models use Blob URLs and browser-provided filenames</td><td>Sanitize names, revoke URLs after consumption, and make generation provenance visible</td></tr>
+            <tr><td>License</td><td>AGPL-3.0</td><td>Provide corresponding source for deployed modifications and retain required notices</td></tr>
+          </tbody>
+        </table></div>
+
+        <div class="callout danger">
+          <div class="c-label">Responsible-use boundary</div>
+          <p>Keys and lock-service tools can affect real property. Use generated models only for systems you own or are explicitly authorized to service. Confirm applicable laws, workplace rules, maker-space policies, and professional obligations before producing or using a part.</p>
+        </div>
+
+        <h3>Physical safety</h3>
+        <ul>
+          <li>Printed dimensions vary with material, orientation, shrinkage, nozzle, layer height, support removal, and machine calibration.</li>
+          <li>A brittle, oversized, or under-strength key can break or bind inside a lock. Test progressively and stop at abnormal resistance.</li>
+          <li>Do not represent an unverified model as production-ready. Use calibrated coupons, dimensional inspection, sacrificial cylinders, and documented acceptance criteria.</li>
+          <li>STL is tessellated and unit conventions may be implicit; confirm slicer units and final measurements before use.</li>
+        </ul>
+      </section>
+
+      <section id="s12">
+        <div class="sec-head"><span class="code">12</span><h2>Quality &amp; observed risk</h2></div>
+        <p class="lede">The codebase has a coherent extension model and pinned core versions, but assurance is primarily manual. The findings below are source-review targets—not claims that every path fails at runtime.</p>
+
+        <h3>Assurance posture</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Control</th><th>Observed state</th><th>Implication</th></tr></thead>
+          <tbody>
+            <tr><td>Automated tests</td><td>No test directory in the snapshot</td><td>Geometry and bridge regressions have no repeatable repository gate</td></tr>
+            <tr><td>CI workflow</td><td>No <code>.github/workflows</code> content</td><td>Buildability and checks are not enforced on changes</td></tr>
+            <tr><td>Type / lint policy</td><td>No declared automated policy</td><td>Cross-runtime contracts rely on conventions and review</td></tr>
+            <tr><td>Version pins</td><td>Core Python and browser dependencies are pinned</td><td>Improves reproducibility but requires planned update testing</td></tr>
+            <tr><td>CAD fixtures</td><td>No dimensional golden-model suite</td><td>Exportability cannot establish physical correctness</td></tr>
+            <tr><td>Browser matrix</td><td>No automated WebGL/PyScript integration suite</td><td>Wrapper equality, Blob timing, workers, and WASM remain environment-sensitive</td></tr>
+          </tbody>
+        </table></div>
+
+        <h3>Source-review findings</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Priority</th><th>Observed source pattern</th><th>Verification / action</th></tr></thead>
+          <tbody>
+            <tr><td><span class="chip gold">High</span></td><td><code>geom_tools.max()</code> references <code>m.Y1</code></td><td>Exercise the helper with representative build123d bounds; correct the coordinate member if unreachable or invalid</td></tr>
+            <tr><td><span class="chip gold">High</span></td><td>Follower generation checks the function name rather than the generated result for <code>None</code></td><td>Add a failed-generation fixture and verify the worker returns a clear controlled error</td></tr>
+            <tr><td><span class="chip gold">High</span></td><td>Immediate preview URL revocation follows an asynchronous loader call</td><td>Revoke in success/error completion handlers and test Chromium, Firefox, and WebKit behavior</td></tr>
+            <tr><td><span class="chip blue">Medium</span></td><td>Tab fallback indexes <code>tabs['keys']</code> instead of <code>tabs['key']</code></td><td>Correct the fallback and cover no-active-button state</td></tr>
+            <tr><td><span class="chip blue">Medium</span></td><td>Opnus validation accepts odd-length bitting before splitting into two halves</td><td>Confirm intended 7+7 grammar and tighten validation with fixtures</td></tr>
+            <tr><td><span class="chip blue">Medium</span></td><td>S&amp;G over-length message indexes grouped profiles as a flat mapping</td><td>Exercise every profile’s too-long input and pin the expected ValueError text</td></tr>
+            <tr><td><span class="chip blue">Medium</span></td><td>VSR help text and accepted depth ranges diverge</td><td>Choose source-of-truth rules from fixtures; update code or explanation together</td></tr>
+            <tr><td><span class="chip blue">Medium</span></td><td>Unit selection compares a PyScript wrapper with raw elements</td><td>Browser-test millimeter/inch round trips, repeated toggles, and preset hydration</td></tr>
+            <tr><td><span class="chip">Medium</span></td><td>Follower remaining length lacks an explicit positive guard</td><td>Add pre-boolean dimension validation and property tests across end combinations</td></tr>
+            <tr><td><span class="chip">Low</span></td><td>Temporary export filenames are fixed</td><td>Use request-scoped names and clean up in <code>finally</code></td></tr>
+          </tbody>
+        </table></div>
+
+        <h3>Recommended test architecture</h3>
+        <div class="risk-grid">
+          <div class="risk-card"><span class="label">Unit layer</span><p>Pure validation, depth lookup, bitting parsing, unit conversion, follower parameter schemas, registry uniqueness, and resource path rules.</p></div>
+          <div class="risk-card"><span class="label">Geometry layer</span><p>Bounding boxes, volumes, solid counts, reference datums, minimum/maximum cuts, and snapshot measurements for every family.</p></div>
+          <div class="risk-card"><span class="label">Worker layer</span><p>Registry RPC, lazy fetching, controlled errors, temporary-file cleanup, STL/STEP byte signatures, and request ordering.</p></div>
+          <div class="risk-card"><span class="label">Browser layer</span><p>Startup, selector dependencies, unit toggles, query round trips, dialogs, worker errors, preview replacement, and downloads.</p></div>
+          <div class="risk-card"><span class="label">Asset layer</span><p>Existence, hashes, SVG labels, STEP units/orientation, PNG readability, and all source-to-class references.</p></div>
+          <div class="risk-card"><span class="label">Physical layer</span><p>Calibrated coupons, critical dimensions, fit and operation in authorized sacrificial fixtures, fatigue, and material-specific tolerances.</p></div>
+        </div>
+      </section>
+
+      <section id="s13">
+        <div class="sec-head"><span class="code">13</span><h2>Operations &amp; troubleshooting</h2></div>
+        <p class="lede">Most failures fall into one of five boundaries: remote dependency startup, worker/resource loading, domain validation, CAD booleans, or preview/download handling. Diagnose the boundary before modifying geometry.</p>
+
+        <div class="table-wrap"><table>
+          <thead><tr><th>Symptom</th><th>Likely boundary</th><th>Checks</th></tr></thead>
+          <tbody>
+            <tr><td>Loader never disappears</td><td>PyScript or worker startup</td><td>Browser console, CDN reachability, wheel install errors, worker path, configured Python version</td></tr>
+            <tr><td>WebGL error or blank viewer</td><td>Three.js / GPU</td><td>WebGL2 support, console, STL request, canvas dimensions, object URL lifetime</td></tr>
+            <tr><td>No keys or followers load</td><td>Worker registry/import</td><td>Import exceptions, subclass registration, <code>get_keys()</code>/<code>get_followers()</code> payload shape</td></tr>
+            <tr><td>One family fails to generate</td><td>Family validation, asset, or CAD operation</td><td>Input grammar, resource fetch, asset label/path, minimum/maximum fixture, boolean diagnostics</td></tr>
+            <tr><td>Model looks plausible but is misplaced</td><td>Datum or asset orientation</td><td>STEP/SVG origin and units, transforms, mirrored faces, shoulder/tip coordinates</td></tr>
+            <tr><td>STL works; STEP fails</td><td>Topology/export</td><td>Solid validity, compound support, temporary path, exporter error, cleanup timing</td></tr>
+            <tr><td>Unit toggle does nothing</td><td>DOM/PyScript wrapper bridge</td><td>Selected wrapper equality, change event, conversion factors, formatted values, preset state</td></tr>
+            <tr><td>Shared link restores the wrong values</td><td>Query schema</td><td>Tag/label rename, URL encoding, parse order, dependent selector hydration, unit normalization</td></tr>
+            <tr><td>Downloads remain disabled</td><td>Worker result/foreground decode</td><td>Returned keys, Base64 validity, Blob construction, error path, stale request state</td></tr>
+          </tbody>
+        </table></div>
+
+        <h3>Diagnostic discipline</h3>
+        <ol>
+          <li>Record the exact URL, browser/version, active tab, generator tag, profile, keyway, bitting/configuration, and timestamp.</li>
+          <li>Capture foreground console errors and worker errors separately.</li>
+          <li>Reduce to a blank or shortest valid input; determine whether failure follows the family, asset, depth, or output format.</li>
+          <li>Inspect the generated part’s solid count and bounding box before preview or slicing.</li>
+          <li>When an asset changed, compare file hash, units, orientation, and labels against the last known-good version.</li>
+          <li>Convert every confirmed regression into the smallest stable automated fixture.</li>
+        </ol>
+      </section>
+
+      <section id="s14">
+        <div class="sec-head"><span class="code">14</span><h2>Module reference</h2></div>
+        <p class="lede">The inspected source is domain-heavy: key-family implementations account for about 44% of lines, while browser orchestration and web assets account for about 38% together.</p>
+
+        <div class="bars" role="img" aria-label="Source composition by responsibility">
+          <div class="bar"><span>Key implementations</span><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span><span class="bar-value">2,001 · 44.3%</span></div>
+          <div class="bar"><span>Web/UI Python</span><span class="bar-track"><span class="bar-fill" style="width:52.3%"></span></span><span class="bar-value">1,046 · 23.1%</span></div>
+          <div class="bar"><span>HTML/CSS/JS</span><span class="bar-track"><span class="bar-fill" style="width:34.3%"></span></span><span class="bar-value">686 · 15.2%</span></div>
+          <div class="bar"><span>Follower engine</span><span class="bar-track"><span class="bar-fill" style="width:21.9%"></span></span><span class="bar-value">439 · 9.7%</span></div>
+          <div class="bar"><span>Core geometry/resources</span><span class="bar-track"><span class="bar-fill" style="width:17.4%"></span></span><span class="bar-value">349 · 7.7%</span></div>
+        </div>
+
+        <h3>Ownership map</h3>
+        <div class="module-map">
+          <div class="module-group"><h3>Core geometry</h3><ul>
+            <li><span>key.py</span><span>abstract key contract</span></li>
+            <li><span>key_cutters.py</span><span>cutter primitives</span></li>
+            <li><span>geom_tools.py</span><span>placement helpers</span></li>
+            <li><span>svgtools.py</span><span>SVG → sketch/face</span></li>
+            <li><span>resource_fetcher.py</span><span>lazy worker assets</span></li>
+          </ul></div>
+          <div class="module-group"><h3>Key families</h3><ul>
+            <li><span>assa.py</span><span>Desmo</span></li>
+            <li><span>dom.py</span><span>System D</span></li>
+            <li><span>miwa.py</span><span>SR</span></li>
+            <li><span>opnus.py</span><span>Memolis</span></li>
+            <li><span>paclock.py</span><span>PR1</span></li>
+            <li><span>sargentandgreenleaf.py</span><span>safe deposit</span></li>
+            <li><span>schlage.py</span><span>Everest family</span></li>
+            <li><span>vsr.py</span><span>2000</span></li>
+          </ul></div>
+          <div class="module-group"><h3>Browser &amp; worker</h3><ul>
+            <li><span>worker.py</span><span>CAD RPC/export</span></li>
+            <li><span>main.py</span><span>boot handoff</span></li>
+            <li><span>web_main.py</span><span>composition/state</span></li>
+            <li><span>web_core.py</span><span>DOM wrappers</span></li>
+            <li><span>tab.py</span><span>tab contract</span></li>
+            <li><span>tab_key.py</span><span>key workflow</span></li>
+            <li><span>tab_follower.py</span><span>follower workflow</span></li>
+            <li><span>model_view.js</span><span>Three.js preview</span></li>
+          </ul></div>
+        </div>
+
+        <h3>Repository map</h3>
+        <pre class="block">realkey/
+├── index.html · main.css             browser application shell
+├── main.py · worker.py               foreground boot + CAD worker
+├── model_view.js · config.json       Three.js preview + PyScript config
+├── src/realkey/
+│   ├── key.py · key_cutters.py       abstract model + reusable cutters
+│   ├── follower.py                   follower body, presets and end registry
+│   ├── assa.py · dom.py · miwa.py    key-family implementations
+│   ├── opnus.py · paclock.py
+│   ├── sargentandgreenleaf.py
+│   ├── schlage.py · vsr.py
+│   ├── geom_tools.py · svgtools.py   geometry and resource services
+│   ├── resource_fetcher.py
+│   └── web_*.py · tab_*.py           browser state and workflows
+├── resources/                        8 SVG · 7 STEP · 3 PNG · 1 STL
+├── docs/                             shareable Word handbook
+└── architecture/                     this single-page engineering dossier</pre>
+      </section>
+
+      <section id="s15">
+        <div class="sec-head"><span class="code">15</span><h2>Roadmap &amp; links</h2></div>
+        <p class="lede">The recommended sequence prioritizes confidence before breadth: establish tests and browser contracts, then harden resources and delivery, then expand the catalog.</p>
+
+        <div class="roadmap">
+          <div class="roadmap-item"><div><h3>Correct high-confidence source issues</h3><p>Address the coordinate typo, worker result check, tab fallback, Blob lifetime, grouped-profile error path, and follower length guard with targeted tests.</p></div></div>
+          <div class="roadmap-item"><div><h3>Establish the minimum merge gate</h3><p>Compile/import checks, registry uniqueness, validation units, asset integrity, representative CAD fixtures, browser smoke tests, and handbook/page consistency.</p></div></div>
+          <div class="roadmap-item"><div><h3>Build a dimensional fixture library</h3><p>Record datums, bounding boxes, critical distances, permitted tolerances, and known-good bittings for every profile and keyway.</p></div></div>
+          <div class="roadmap-item"><div><h3>Harden browser and worker transactions</h3><p>Add request IDs, last-request-wins handling, deterministic URL cleanup, structured errors, cancellable status, and unique temporary exports.</p></div></div>
+          <div class="roadmap-item"><div><h3>Harden the supply chain</h3><p>Document package provenance, add an SBOM, audit CDN/runtime updates, self-host critical resources where practical, and adopt a tested CSP.</p></div></div>
+          <div class="roadmap-item"><div><h3>Improve accessibility and operability</h3><p>Verify keyboard focus, dialog semantics, visible labels, screen-reader status, reduced motion, touch targets, responsive canvas behavior, and offline/error guidance.</p></div></div>
+          <div class="roadmap-item"><div><h3>Expand supported systems deliberately</h3><p>Require a grammar, normalized source assets, golden geometry fixtures, user guidance, and complete registry/URL documentation for every new family.</p></div></div>
+        </div>
+
+        <h3>Project surfaces</h3>
+        <div class="link-grid">
+          <a class="link-card" href="../"><b>RealKey generator</b><span>Run key and follower generation in the browser.</span></a>
+          <a class="link-card" href="https://github.com/smgoldade/realkey"><b>Source repository</b><span>Code, history, issues, contributions, and AGPL license.</span></a>
+          <a class="link-card" href="../docs/RealKey_Technical_Documentation.docx"><b>Technical handbook</b><span>Download the full formatted maintainer document.</span></a>
+          <a class="link-card" href="../CONTRIBUTING.md"><b>Contribution guide</b><span>Repository contribution expectations and workflow.</span></a>
+        </div>
+
+        <div class="callout">
+          <div class="c-label">Maintainer handoff</div>
+          <p>When releasing a meaningful architecture change, update version and commit metadata, regenerate repository metrics, review all diagrams and catalogs, rerun accessibility and responsive checks, and verify that the Word handbook and this page describe the same source baseline.</p>
+        </div>
+      </section>
+
+      <footer class="colophon">
+        <span>RealKey engineering dossier · TD-01</span>
+        <span>Revision 0.2.0 · source 68595bb</span>
+        <span>Prepared 2026-07-14 · AGPL-3.0</span>
+        <span>Browser-native CAD</span>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const nav = document.querySelector('.toc');
+      const toggle = document.querySelector('.nav-toggle');
+      const links = [...document.querySelectorAll('.toc a')];
+      const sections = [...document.querySelectorAll('main section[id]')];
+      const progress = document.getElementById('progress');
+
+      const closeNav = () => {
+        nav.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-label', 'Open table of contents');
+      };
+
+      toggle.addEventListener('click', () => {
+        const open = nav.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', String(open));
+        toggle.setAttribute('aria-label', open ? 'Close table of contents' : 'Open table of contents');
+      });
+
+      links.forEach((link) => link.addEventListener('click', closeNav));
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeNav();
+      });
+      document.addEventListener('click', (event) => {
+        if (window.innerWidth <= 1160 && nav.classList.contains('open') && !nav.contains(event.target) && !toggle.contains(event.target)) closeNav();
+      });
+
+      const setActive = (id) => {
+        links.forEach((link) => {
+          if (link.hash === `#${id}`) link.setAttribute('aria-current', 'true');
+          else link.removeAttribute('aria-current');
+        });
+      };
+
+      if ('IntersectionObserver' in window) {
+        const visible = new Map();
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => visible.set(entry.target.id, entry));
+          const active = [...visible.values()]
+            .filter((entry) => entry.isIntersecting)
+            .sort((a, b) => Math.abs(a.boundingClientRect.top) - Math.abs(b.boundingClientRect.top))[0];
+          if (active) setActive(active.target.id);
+        }, { rootMargin: '-12% 0px -70% 0px', threshold: [0, .1, .4] });
+        sections.forEach((section) => observer.observe(section));
+      } else {
+        setActive('s00');
+      }
+
+      const updateProgress = () => {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        const value = max > 0 ? Math.min(100, Math.max(0, window.scrollY / max * 100)) : 0;
+        progress.style.width = `${value}%`;
+      };
+      updateProgress();
+      window.addEventListener('scroll', updateProgress, { passive: true });
+      window.addEventListener('resize', () => {
+        updateProgress();
+        if (window.innerWidth > 1160) closeNav();
+      });
+
+      document.querySelectorAll('.sec-head').forEach((head) => {
+        const section = head.closest('section');
+        const button = document.createElement('button');
+        button.className = 'link-section';
+        button.type = 'button';
+        button.textContent = 'LINK';
+        button.setAttribute('aria-label', `Copy link to ${head.querySelector('h2').textContent}`);
+        button.addEventListener('click', async () => {
+          const url = new URL(window.location.href);
+          url.hash = section.id;
+          try {
+            await navigator.clipboard.writeText(url.href);
+            button.textContent = 'COPIED';
+            setTimeout(() => { button.textContent = 'LINK'; }, 1200);
+          } catch {
+            window.location.hash = section.id;
+          }
+        });
+        head.append(button);
+      });
+    })();
+  </script>
+</body>
+</html>

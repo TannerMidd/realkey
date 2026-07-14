@@ -84,12 +84,11 @@ class _2000(key.Key):
 
     @classmethod
     def validate_bitting(cls, profile: str, keyway: str, bitting: str):
-        if len(bitting.split()) == 1:
-            raise ValueError("No top or left cuts specified")
-        if len(bitting.split()) == 2:
-            raise ValueError("No left cuts specified")
+        rows = bitting.split()
+        if len(rows) != 3:
+            raise ValueError("Specify right, top, and left cuts separated by spaces")
 
-        r_bitting, t_bitting, l_bitting = bitting.split()
+        r_bitting, t_bitting, l_bitting = rows
 
         if len(r_bitting) > 6:
             raise ValueError("Only up to 6 cuts allowed on the right side")
@@ -102,14 +101,16 @@ class _2000(key.Key):
             raise ValueError("Only numeric cuts are allowed")
 
         for cut in r_bitting:
-            if int(cut) < 1 or int(cut) > 5:
-                raise ValueError("Cut depths must be from 1 to 5")
+            if int(cut) < 2 or int(cut) > 5:
+                raise ValueError("Right-side cut depths must be from 2 to 5")
         for cut in t_bitting:
-            if int(cut) < 1 or int(cut) > 5:
-                raise ValueError("Cut depths must be from 1 to 5")
+            if int(cut) not in [1, 3]:
+                raise ValueError("Top cut depths must be 1 or 3")
+        if len(t_bitting) == 3 and t_bitting[2] != "1":
+            raise ValueError("The third top cut must be 1")
         for cut in l_bitting:
-            if int(cut) < 1 or int(cut) > 5:
-                raise ValueError("Cut depths must be from 1 to 5")
+            if int(cut) < 2 or int(cut) > 5:
+                raise ValueError("Left-side cut depths must be from 2 to 5")
         return
 
     @classmethod

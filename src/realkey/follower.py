@@ -1,11 +1,18 @@
 from abc import ABC, abstractmethod
-from math import atan2, degrees
+from math import atan2, degrees, isfinite
+from numbers import Real
 from typing import NamedTuple
 
 from build123d import *
 from build123d import Part
 
 from realkey import geom_tools
+
+
+_MIN_FOLLOWER_LENGTH = 1 * MM
+_MAX_FOLLOWER_LENGTH = 1000 * MM
+_MIN_FOLLOWER_DIAMETER = 1 * MM
+_MAX_FOLLOWER_DIAMETER = 100 * MM
 
 
 class FollowerConfigData(NamedTuple):
@@ -15,6 +22,64 @@ class FollowerConfigData(NamedTuple):
     top_config: dict[str, float]
     bottom_tag: str
     bottom_config: dict[str, float]
+
+    def validate(self) -> None:
+        """Validate transport-independent follower inputs before CAD work begins."""
+
+        def finite_number(name: str, value: object) -> float:
+            if isinstance(value, bool) or not isinstance(value, Real):
+                raise ValueError(f"{name} must be a number")
+            numeric_value = float(value)
+            if not isfinite(numeric_value):
+                raise ValueError(f"{name} must be finite")
+            return numeric_value
+
+        length = finite_number("Follower length", self.length)
+        diameter = finite_number("Follower diameter", self.diameter)
+        if not _MIN_FOLLOWER_LENGTH <= length <= _MAX_FOLLOWER_LENGTH:
+            raise ValueError(f"Follower length must be between {_MIN_FOLLOWER_LENGTH:g}mm and {_MAX_FOLLOWER_LENGTH:g}mm")
+        if not _MIN_FOLLOWER_DIAMETER <= diameter <= _MAX_FOLLOWER_DIAMETER:
+            raise ValueError(f"Follower diameter must be between {_MIN_FOLLOWER_DIAMETER:g}mm and {_MAX_FOLLOWER_DIAMETER:g}mm")
+
+        configured_depth = 0.0
+        for side, tag, config in (
+            ("Top", self.top_tag, self.top_config),
+            ("Bottom", self.bottom_tag, self.bottom_config),
+        ):
+            end_cls = FollowerEnd._list.get(tag)
+            if end_cls is None:
+                raise ValueError(f'Unknown {side.lower()} follower end "{tag}"')
+            if not isinstance(config, dict):
+                raise ValueError(f"{side} follower configuration must be a dictionary")
+
+            expected_fields = set(end_cls.config())
+            provided_fields = set(config)
+            missing_fields = expected_fields - provided_fields
+            if missing_fields:
+                missing = ", ".join(sorted(missing_fields))
+                raise ValueError(f"{side} follower configuration is missing: {missing}")
+            unknown_fields = provided_fields - expected_fields - {"rotation"}
+            if unknown_fields:
+                unknown = ", ".join(sorted(unknown_fields))
+                raise ValueError(f"{side} follower configuration has unknown fields: {unknown}")
+
+            for field, raw_value in config.items():
+                value = finite_number(f"{side} {field}", raw_value)
+                if field == "rotation":
+                    continue
+                if value <= 0:
+                    raise ValueError(f"{side} {field} must be greater than zero")
+                if field.endswith("_depth"):
+                    if value >= length:
+                        raise ValueError(f"{side} {field} must be shorter than the follower")
+                    configured_depth += value
+                if field.endswith("_width") and value > diameter:
+                    raise ValueError(f"{side} {field} cannot exceed the follower diameter")
+                if field.endswith("_wall_thickness") and value >= diameter / 2:
+                    raise ValueError(f"{side} {field} must be less than the follower radius")
+
+        if configured_depth >= length:
+            raise ValueError("Combined follower end depths must be shorter than the follower")
 
 
 FOLLOWER_DEFINITIONS: dict[str, FollowerConfigData | None] = {
@@ -65,7 +130,12 @@ class FollowerEnd(ABC):
 
     def __init_subclass__(cls, **kwargs):
         """Used to have a list of all current follower ends available for generation"""
-        FollowerEnd._list[cls.tag()] = cls
+        super().__init_subclass__(**kwargs)
+        tag = cls.tag()
+        existing = FollowerEnd._list.get(tag)
+        if existing is not None and existing is not cls:
+            raise ValueError(f'Follower end tag "{tag}" is already registered by {existing.__name__}')
+        FollowerEnd._list[tag] = cls
 
     @classmethod
     @abstractmethod
@@ -381,13 +451,22 @@ class SchlageFollowerEnd(FollowerEnd):
 class Follower:
     @classmethod
     def generate(cls, config_data: FollowerConfigData) -> Part:
+        config_data.validate()
+
         top_cls: FollowerEnd = FollowerEnd._list[config_data.top_tag]
         bottom_cls: FollowerEnd = FollowerEnd._list[config_data.bottom_tag]
 
         top_part, top_length = top_cls.generate(config_data.length, config_data.diameter, config_data.top_config)
         bottom_part, bottom_length = bottom_cls.generate(config_data.length, config_data.diameter, config_data.bottom_config)
 
+        if not isfinite(top_length) or top_length < 0:
+            raise ValueError("Top follower end generated an invalid length")
+        if not isfinite(bottom_length) or bottom_length < 0:
+            raise ValueError("Bottom follower end generated an invalid length")
+
         remaining_length = config_data.length - top_length - bottom_length
+        if remaining_length <= 0:
+            raise ValueError("Follower ends leave no positive body length")
         radius = config_data.diameter / 2
 
         end_offset = remaining_length / 2
@@ -395,35 +474,34 @@ class Follower:
         if top_part is not None:
             top_part.position += (0, 0, end_offset + top_length / 2)
             if config_data.top_config:
-                top_part = top_part.rotate(Axis.Z, config_data.top_config["rotation"])
+                top_part = top_part.rotate(Axis.Z, config_data.top_config.get("rotation", 0.0))
         if bottom_part is not None:
             bottom_part = bottom_part.rotate(Axis.X, 180)
             bottom_part.position -= (0, 0, end_offset + bottom_length / 2)
             if config_data.bottom_config:
-                bottom_part = bottom_part.rotate(Axis.Z, config_data.bottom_config["rotation"])
+                bottom_part = bottom_part.rotate(Axis.Z, config_data.bottom_config.get("rotation", 0.0))
 
         chamfer_amount = config_data.diameter / 14
+        end_chamfer_amount = chamfer_amount * 1.4
         with BuildPart() as follower:
             Cylinder(radius=radius, height=remaining_length)
             if top_part is not None:
                 add(top_part)
                 with BuildPart(mode=Mode.SUBTRACT) as top_chamfer:
-                    chamfer_amount *= 1.4
                     with Locations((0, 0, end_offset + top_length)):
-                        add(geom_tools.Tube(radius - chamfer_amount / 2, radius + chamfer_amount * 2, chamfer_amount * 2 + 0.001))
+                        add(geom_tools.Tube(radius - end_chamfer_amount / 2, radius + end_chamfer_amount * 2, end_chamfer_amount * 2 + 0.001))
                     bottom_edges = top_chamfer.edges().group_by(Axis.Z)[0].sort_by(Axis.X)[-1]
-                    chamfer(bottom_edges, chamfer_amount)
+                    chamfer(bottom_edges, end_chamfer_amount)
             else:
                 top_edge = follower.edges().sort_by(Axis.Z)[-1]
                 chamfer(top_edge, chamfer_amount)
             if bottom_part is not None:
                 add(bottom_part)
                 with BuildPart(mode=Mode.SUBTRACT) as bottom_chamfer:
-                    chamfer_amount *= 1.4
                     with Locations((0, 0, -end_offset - bottom_length)):
-                        add(geom_tools.Tube(radius - chamfer_amount / 2, radius + chamfer_amount * 2, chamfer_amount * 2 + 0.001))
+                        add(geom_tools.Tube(radius - end_chamfer_amount / 2, radius + end_chamfer_amount * 2, end_chamfer_amount * 2 + 0.001))
                     top_edges = bottom_chamfer.edges().group_by(Axis.Z)[-1].sort_by(Axis.X)[-1]
-                    chamfer(top_edges, chamfer_amount)
+                    chamfer(top_edges, end_chamfer_amount)
             else:
                 bottom_edge = follower.edges().sort_by(Axis.Z)[0]
                 chamfer(bottom_edge, chamfer_amount)

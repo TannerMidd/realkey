@@ -1,3 +1,4 @@
+import math
 from typing import Iterable
 
 from pyscript import web, when
@@ -24,7 +25,20 @@ class Element:
 
     @html.setter
     def html(self, value: str):
+        """Set authored, trusted markup. Use ``text`` for runtime values."""
         self._web_element.innerHTML = value
+
+    @property
+    def text(self) -> str:
+        return str(self._web_element.textContent)
+
+    @text.setter
+    def text(self, value: str):
+        self._web_element.textContent = value
+
+    def hide_popover(self):
+        if hasattr(self._web_element, "hidePopover"):
+            self._web_element.hidePopover()  # type: ignore
 
     def _set_class_bool(self, class_name: str, value: bool):
         if value:
@@ -170,12 +184,25 @@ class SelectElement(Element):
 
 
 class LengthInputElement(FloatValueElement):
-    def __init__(self, web_element: web.ElementCollection) -> None:
+    def __init__(self, web_element: web.ElementCollection, label: str | None = None) -> None:
         super().__init__(web_element)
 
         self._set_class_bool("length-input", True)
-        self._input = web.input_(type="text", value="0.000", min="0", pattern="^\\d*(\\.\\d{0,3})?$", classes=["length-input-text"])
-        self._units = web.select(classes=["length-input-select"])
+        wrapper_id = str(self._web_element.getAttribute("id"))  # type: ignore
+        accessible_label = label or wrapper_id.replace("-", " ").title()
+        self._input = web.input_(
+            id=f"{wrapper_id}-value",
+            type="number",
+            value="0.000",
+            min="0.001",
+            max="1000",
+            step="0.001",
+            required=True,
+            classes=["length-input-text"],
+        )
+        self._input.setAttribute("aria-label", f"{accessible_label} value")  # type: ignore
+        self._units = web.select(id=f"{wrapper_id}-units", classes=["length-input-select"])
+        self._units.setAttribute("aria-label", f"{accessible_label} units")  # type: ignore
         self._mm = web.option(value="mm", innerHTML="mm")
         self._inch = web.option(value="in", innerHTML="in")
         self._resolution = 3
@@ -193,20 +220,29 @@ class LengthInputElement(FloatValueElement):
     def unit_change(self):
         if self._units.options.selected == self._mm:
             self._resolution = 3
-            self._input.pattern = "^\\d*(\\.\\d{0,3})?$"
+            self._input.step = "0.001"
             self.value = self.value * 25.4
         elif self._units.options.selected == self._inch:
             self._resolution = 5
-            self._input.pattern = "^\\d*(\\.\\d{0,5})?$"
+            self._input.step = "0.00001"
             self.value = self.value / 25.4
         self.validate()
 
     def validate(self):
-        self._input.setCustomValidity("")  # type: ignore
-        self._input.reportValidity()  # type: ignore
+        try:
+            value = self.value
+            valid = math.isfinite(value) and value > 0
+        except (TypeError, ValueError):
+            valid = False
+        self._input.setCustomValidity("" if valid else "Enter a finite value greater than zero")  # type: ignore
+        return valid and bool(self._input.checkValidity())  # type: ignore
 
     def invalid_input(self):
-        self._input.setCustomValidity(f"Enter a positive value with maximum decimal precision of {self._resolution}")  # type: ignore
+        self._input.setCustomValidity(f"Enter a positive finite value with maximum decimal precision of {self._resolution}")  # type: ignore
+
+    @property
+    def is_valid(self) -> bool:
+        return self.validate()
 
     @property
     def value(self) -> float:

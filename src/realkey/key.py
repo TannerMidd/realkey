@@ -9,7 +9,12 @@ class Key(ABC):
 
     def __init_subclass__(cls, **kwargs):
         """Used to have a list of all current keys available for generation"""
-        Key._list[cls.tag()] = cls
+        super().__init_subclass__(**kwargs)
+        tag = cls.tag()
+        existing = Key._list.get(tag)
+        if existing is not None and existing is not cls:
+            raise ValueError(f'Key tag "{tag}" is already registered by {existing.__name__}')
+        Key._list[tag] = cls
 
     @classmethod
     @abstractmethod

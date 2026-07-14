@@ -524,11 +524,15 @@ class EverestPrimus(key.Key, EverestBlank):
         return None
 
     @classmethod
-    def validate_bitting(cls, profile: str, keyway: str, bitting: str):
-        if " " not in bitting:
-            raise ValueError("No sidebar cuts specified")
+    def _split_bitting(cls, bitting: str) -> tuple[str, str]:
+        rows = bitting.split()
+        if len(rows) != 2:
+            raise ValueError("Specify main and sidebar cuts separated by whitespace")
+        return rows[0], rows[1]
 
-        main_bitting, sidebar_bitting = bitting.split()
+    @classmethod
+    def validate_bitting(cls, profile: str, keyway: str, bitting: str):
+        main_bitting, sidebar_bitting = cls._split_bitting(bitting)
         if len(main_bitting) > 6:
             raise ValueError("Only up to 6 main cuts are allowed")
         if len(sidebar_bitting) > 5:
@@ -553,7 +557,7 @@ class EverestPrimus(key.Key, EverestBlank):
         cls.validate_bitting(profile, keyway, bitting)
 
         primus_blank = cls.blank(profile, keyway)
-        main_bitting, sidebar_bitting = bitting.split(" ")
+        main_bitting, sidebar_bitting = cls._split_bitting(bitting)
 
         main_cut_points: list[tuple[float, float]] = []
         sidebar_cut_points: list[tuple[float, float]] = []
