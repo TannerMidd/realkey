@@ -80,6 +80,19 @@ def test_html_accessibility_and_private_share_defaults() -> None:
     )
 
 
+def test_literal_web_bindings_reference_existing_html_ids() -> None:
+    parser = _HtmlContractParser()
+    parser.feed((ROOT / "index.html").read_text(encoding="utf-8"))
+
+    binding_pattern = re.compile(r'web\.page\["([^"]+)"\]')
+    bound_ids: set[str] = set()
+    for source in (ROOT / "src" / "realkey").glob("*.py"):
+        bound_ids.update(binding_pattern.findall(source.read_text(encoding="utf-8")))
+    bound_ids.update(binding_pattern.findall((ROOT / "main.py").read_text(encoding="utf-8")))
+
+    assert bound_ids <= set(parser.ids)
+
+
 def test_browser_generation_contract_is_transactional() -> None:
     foreground = (ROOT / "src" / "realkey" / "web_main.py").read_text(encoding="utf-8")
     worker = (ROOT / "worker.py").read_text(encoding="utf-8")

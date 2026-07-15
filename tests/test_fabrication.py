@@ -4,6 +4,7 @@ import pytest
 
 from realkey.fabrication import (
     BUILTIN_PROFILES,
+    DetailedGeometryInputs,
     GENERIC_PLA_PROFILE,
     ModelMetrics,
     PrinterProfile,
@@ -110,20 +111,13 @@ def test_thin_features_walls_and_z_are_reported() -> None:
     ]
 
 
-@pytest.mark.parametrize(
-    ("minimum_feature_mm", "minimum_wall_mm"),
-    [(None, None), (None, 1.2), (1.0, None)],
-)
-def test_unknown_detailed_geometry_emits_one_warning_and_skips_both_checks(
-    minimum_feature_mm: float | None,
-    minimum_wall_mm: float | None,
-) -> None:
+def test_unknown_detailed_geometry_is_disclosed_without_recommending_review() -> None:
     metrics = ModelMetrics(
         size_x_mm=70,
         size_y_mm=25,
         size_z_mm=3,
-        minimum_feature_mm=minimum_feature_mm,
-        minimum_wall_mm=minimum_wall_mm,
+        minimum_feature_mm=None,
+        minimum_wall_mm=None,
     )
 
     report = analyze_printability(metrics, GENERIC_PLA_PROFILE)
@@ -131,9 +125,104 @@ def test_unknown_detailed_geometry_emits_one_warning_and_skips_both_checks(
     assert [issue.code for issue in report.issues] == [
         "DETAILED_GEOMETRY_NOT_MEASURED"
     ]
-    assert report.issues[0].severity is Severity.WARNING
-    assert report.metrics.to_dict()["minimum_feature_mm"] is minimum_feature_mm
-    assert report.metrics.to_dict()["minimum_wall_mm"] is minimum_wall_mm
+    assert report.issues[0].severity is Severity.INFO
+    assert report.status == "no_issues_detected"
+    assert not report.has_errors
+    assert not report.has_warnings
+    assert "not run" in report.issues[0].message
+
+
+@pytest.mark.parametrize(
+    ("minimum_feature_mm", "minimum_wall_mm", "coverage_code"),
+    [
+        (None, 1.2, "FEATURE_WIDTH_NOT_MEASURED"),
+        (1.0, None, "WALL_THICKNESS_NOT_MEASURED"),
+    ],
+)
+def test_available_detailed_geometry_check_runs_independently(
+    minimum_feature_mm: float | None,
+    minimum_wall_mm: float | None,
+    coverage_code: str,
+) -> None:
+    report = analyze_printability(
+        ModelMetrics(
+            size_x_mm=70,
+            size_y_mm=25,
+            size_z_mm=3,
+            minimum_feature_mm=minimum_feature_mm,
+            minimum_wall_mm=minimum_wall_mm,
+        ),
+        GENERIC_PLA_PROFILE,
+    )
+
+    assert [issue.code for issue in report.issues] == [coverage_code]
+    assert report.status == "no_issues_detected"
+
+
+@pytest.mark.parametrize(
+    ("detailed_geometry", "issue_codes"),
+    [
+        (
+            DetailedGeometryInputs(minimum_feature_mm=0.3),
+            ["WALL_THICKNESS_NOT_MEASURED", "FEATURE_BELOW_NOZZLE"],
+        ),
+        (
+            DetailedGeometryInputs(minimum_wall_mm=0.3),
+            ["FEATURE_WIDTH_NOT_MEASURED", "WALL_BELOW_NOZZLE"],
+        ),
+    ],
+)
+def test_user_supplied_geometry_enables_its_corresponding_check(
+    detailed_geometry: DetailedGeometryInputs,
+    issue_codes: list[str],
+) -> None:
+    worker_metrics = ModelMetrics(
+        size_x_mm=70,
+        size_y_mm=25,
+        size_z_mm=3,
+        minimum_feature_mm=None,
+        minimum_wall_mm=None,
+    )
+
+    report = analyze_printability(
+        worker_metrics,
+        GENERIC_PLA_PROFILE,
+        detailed_geometry=detailed_geometry,
+    )
+
+    assert [issue.code for issue in report.issues] == issue_codes
+    assert report.status == "outside_profile_limits"
+    assert report.metrics.minimum_feature_mm == detailed_geometry.minimum_feature_mm
+    assert report.metrics.minimum_wall_mm == detailed_geometry.minimum_wall_mm
+    assert worker_metrics.minimum_feature_mm is None
+    assert worker_metrics.minimum_wall_mm is None
+
+
+def test_detailed_geometry_inputs_validate_overlay_and_round_trip() -> None:
+    worker_metrics = ModelMetrics(
+        size_x_mm=70,
+        size_y_mm=25,
+        size_z_mm=3,
+        minimum_feature_mm=0.8,
+        minimum_wall_mm=None,
+    )
+    supplied = DetailedGeometryInputs(minimum_wall_mm=1.2)
+
+    effective = supplied.apply_to(worker_metrics)
+
+    assert effective.minimum_feature_mm == 0.8
+    assert effective.minimum_wall_mm == 1.2
+    assert supplied.has_values
+    assert not supplied.is_complete
+    assert DetailedGeometryInputs.from_dict(supplied.to_dict()) == supplied
+
+    with pytest.raises(ValueError, match="between"):
+        DetailedGeometryInputs(minimum_feature_mm=0)
+
+    with pytest.raises(ValueError, match="unexpected"):
+        DetailedGeometryInputs.from_dict(
+            {"minimum_feature_mm": 1, "minimum_wall_mm": 1, "unknown": 1}
+        )
 
 
 def test_profile_metrics_issue_and_report_round_trip_plain_dicts() -> None:

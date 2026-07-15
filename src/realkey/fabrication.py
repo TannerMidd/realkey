@@ -23,6 +23,7 @@ __all__ = [
     "GENERIC_NYLON_PROFILE",
     "GENERIC_PETG_PROFILE",
     "GENERIC_PLA_PROFILE",
+    "DetailedGeometryInputs",
     "ModelMetrics",
     "PrinterProfile",
     "PrintabilityIssue",
@@ -314,6 +315,87 @@ class ModelMetrics:
 
 
 @dataclass(frozen=True, slots=True)
+class DetailedGeometryInputs:
+    """Optional model-specific measurements supplied for detailed checks.
+
+    These values describe one generated model, rather than a printer's
+    capabilities.  Applying them returns new :class:`ModelMetrics` and leaves
+    any worker-provided measurements in place when an input is omitted.
+    """
+
+    minimum_feature_mm: float | None = None
+    minimum_wall_mm: float | None = None
+
+    _DICT_KEYS: ClassVar[frozenset[str]] = frozenset(
+        {
+            "minimum_feature_mm",
+            "minimum_wall_mm",
+        }
+    )
+
+    def __post_init__(self) -> None:
+        for field_name in ("minimum_feature_mm", "minimum_wall_mm"):
+            object.__setattr__(
+                self,
+                field_name,
+                _optional_finite_float(
+                    getattr(self, field_name),
+                    field_name,
+                    minimum=0.001,
+                    maximum=100_000.0,
+                ),
+            )
+
+    @property
+    def has_values(self) -> bool:
+        return (
+            self.minimum_feature_mm is not None
+            or self.minimum_wall_mm is not None
+        )
+
+    @property
+    def is_complete(self) -> bool:
+        return (
+            self.minimum_feature_mm is not None
+            and self.minimum_wall_mm is not None
+        )
+
+    def apply_to(self, metrics: ModelMetrics) -> ModelMetrics:
+        """Overlay supplied values onto metrics without mutating either object."""
+
+        if not isinstance(metrics, ModelMetrics):
+            raise ValueError("metrics must be ModelMetrics")
+        return ModelMetrics(
+            size_x_mm=metrics.size_x_mm,
+            size_y_mm=metrics.size_y_mm,
+            size_z_mm=metrics.size_z_mm,
+            minimum_feature_mm=(
+                self.minimum_feature_mm
+                if self.minimum_feature_mm is not None
+                else metrics.minimum_feature_mm
+            ),
+            minimum_wall_mm=(
+                self.minimum_wall_mm
+                if self.minimum_wall_mm is not None
+                else metrics.minimum_wall_mm
+            ),
+        )
+
+    def to_dict(self) -> dict[str, float | None]:
+        """Return a JSON-safe dictionary with a stable field order."""
+
+        return {
+            "minimum_feature_mm": self.minimum_feature_mm,
+            "minimum_wall_mm": self.minimum_wall_mm,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, object]) -> DetailedGeometryInputs:
+        values = _strict_mapping(data, cls._DICT_KEYS, "DetailedGeometryInputs")
+        return cls(**values)  # type: ignore[arg-type]
+
+
+@dataclass(frozen=True, slots=True)
 class PrintabilityIssue:
     """One actionable result from a printability profile comparison."""
 
@@ -571,8 +653,14 @@ def get_builtin_profile(profile_id: str) -> PrinterProfile:
 def analyze_printability(
     metrics: ModelMetrics,
     profile: PrinterProfile,
+    *,
+    detailed_geometry: DetailedGeometryInputs | None = None,
 ) -> PrintabilityReport:
     """Compare model measurements with printer-profile geometry limits.
+
+    ``detailed_geometry`` can supply model-specific measurements that the CAD
+    worker could not derive.  Supplied values override only their corresponding
+    metric; the feature-width and wall-thickness checks run independently.
 
     Issue ordering and text are stable for identical inputs, making the report
     suitable for caching and deterministic UI snapshots.  A report with no
@@ -583,6 +671,10 @@ def analyze_printability(
         raise ValueError("metrics must be ModelMetrics")
     if not isinstance(profile, PrinterProfile):
         raise ValueError("profile must be a PrinterProfile")
+    if detailed_geometry is not None:
+        if not isinstance(detailed_geometry, DetailedGeometryInputs):
+            raise ValueError("detailed_geometry must be DetailedGeometryInputs")
+        metrics = detailed_geometry.apply_to(metrics)
 
     issues: list[PrintabilityIssue] = []
 
@@ -629,22 +721,53 @@ def analyze_printability(
             )
 
     nozzle = profile.nozzle_diameter_mm
-    if metrics.minimum_feature_mm is None or metrics.minimum_wall_mm is None:
+    if metrics.minimum_feature_mm is None and metrics.minimum_wall_mm is None:
         issues.append(
             PrintabilityIssue(
                 code="DETAILED_GEOMETRY_NOT_MEASURED",
-                severity=Severity.WARNING,
+                severity=Severity.INFO,
                 message=(
-                    "Minimum feature width and wall thickness were not both "
-                    "measured, so nozzle-resolution checks were skipped."
+                    "Detailed feature-width and wall-thickness measurements "
+                    "are unavailable, so nozzle-resolution checks were not run."
                 ),
                 recommendation=(
-                    "Inspect the sliced toolpath or provide measured minimum "
-                    "feature and wall values before relying on those checks."
+                    "Enter either model measurement to run its check, or inspect "
+                    "the sliced toolpath when feature fidelity or wall strength matters."
                 ),
             )
         )
-    else:
+    elif metrics.minimum_feature_mm is None:
+        issues.append(
+            PrintabilityIssue(
+                code="FEATURE_WIDTH_NOT_MEASURED",
+                severity=Severity.INFO,
+                message=(
+                    "Minimum feature width is unavailable, so its "
+                    "nozzle-resolution check was not run."
+                ),
+                recommendation=(
+                    "Enter the model's smallest feature width or inspect the "
+                    "sliced toolpath for feature fidelity."
+                ),
+            )
+        )
+    elif metrics.minimum_wall_mm is None:
+        issues.append(
+            PrintabilityIssue(
+                code="WALL_THICKNESS_NOT_MEASURED",
+                severity=Severity.INFO,
+                message=(
+                    "Minimum wall thickness is unavailable, so its "
+                    "nozzle-resolution check was not run."
+                ),
+                recommendation=(
+                    "Enter the model's thinnest wall or inspect perimeter "
+                    "generation in the sliced toolpath."
+                ),
+            )
+        )
+
+    if metrics.minimum_feature_mm is not None:
         if metrics.minimum_feature_mm < nozzle:
             issues.append(
                 PrintabilityIssue(
@@ -682,6 +805,7 @@ def analyze_printability(
                 )
             )
 
+    if metrics.minimum_wall_mm is not None:
         recommended_wall = profile.recommended_wall_mm
         if metrics.minimum_wall_mm < nozzle:
             issues.append(

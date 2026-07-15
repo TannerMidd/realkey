@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="no-referrer">
-    <meta name="theme-color" content="#080b10">
+    <meta name="theme-color" content="#0a0d11">
     <meta property="og:title" content="realkey">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://tannermidd.github.io/realkey/">
@@ -83,22 +83,18 @@
             <aside class="input-pane" aria-label="Model configuration">
                 <div class="inspector-scroll">
                 <div class="inspector-intro">
-                    <div>
-                        <p class="eyebrow">01 · Define</p>
-                        <h2>Model setup</h2>
-                    </div>
-                    <span class="inspector-badge">Parametric</span>
+                    <h2>Model setup</h2>
                 </div>
-                <p class="section-description">Choose a platform and describe the exact geometry you want to build.</p>
+                <p class="section-description">Choose a platform, set its geometry, then generate the model locally.</p>
 
                 <div class="tab-select" role="tablist" aria-label="Generator type">
                     <button type="button" id="key-tab-button" class="tablinks active" role="tab" aria-selected="true" aria-controls="key-tab" tabindex="0" title="Key generator">
                         <span class="tab-icon"><i class="fa-solid fa-key" aria-hidden="true"></i></span>
-                        <span class="tab-copy"><strong>Key</strong><small>Cut &amp; profile</small></span>
+                        <span class="tab-copy"><strong>Key</strong></span>
                     </button>
                     <button type="button" id="follower-tab-button" class="tablinks" role="tab" aria-selected="false" aria-controls="follower-tab" tabindex="-1" title="Follower generator">
                         <span class="tab-icon"><img src="resources/plug_follower.svg" alt="" aria-hidden="true"></span>
-                        <span class="tab-copy"><strong>Follower</strong><small>Core service</small></span>
+                        <span class="tab-copy"><strong>Follower</strong></span>
                     </button>
                 </div>
 
@@ -179,13 +175,12 @@
                     </div>
                 </section>
 
-                <details id="fabrication-panel" class="fabrication-panel" open>
+                <details id="fabrication-panel" class="fabrication-panel">
                     <summary>
                         <span class="summary-heading">
-                            <span class="section-number">02</span>
                             <span>
                                 <strong id="fabrication-heading">Fabrication check</strong>
-                                <small>Process fit &amp; tolerances</small>
+                                <small id="fabrication-summary-status" role="status" aria-live="polite" aria-atomic="true">Not checked</small>
                             </span>
                         </span>
                         <span class="summary-chevron" aria-hidden="true"><i class="fa-solid fa-chevron-down"></i></span>
@@ -227,6 +222,22 @@
                             </fieldset>
                         </details>
 
+                        <details id="fabrication-geometry-settings" class="profile-settings geometry-settings">
+                            <summary><span>Measured model geometry</span><small>Optional</small><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary>
+                            <div class="geometry-settings-body">
+                                <p>Measure in the sliced-layer (XY) plane using CAD or your slicer. Each value enables its corresponding nozzle check and clears when the model changes.</p>
+                                <fieldset class="fabrication-fields geometry-fields">
+                                    <legend class="visually-hidden">Measured model geometry</legend>
+                                    <label for="fabrication-minimum-feature">Smallest XY feature
+                                        <span class="number-with-unit"><input id="fabrication-minimum-feature" type="number" min="0.001" max="100000" step="0.01" inputmode="decimal" placeholder="Optional"><span>mm</span></span>
+                                    </label>
+                                    <label for="fabrication-minimum-wall">Minimum XY wall
+                                        <span class="number-with-unit"><input id="fabrication-minimum-wall" type="number" min="0.001" max="100000" step="0.01" inputmode="decimal" placeholder="Optional"><span>mm</span></span>
+                                    </label>
+                                </fieldset>
+                            </div>
+                        </details>
+
                         <div id="fabrication-report" class="fabrication-report" aria-label="Fabrication analysis">
                             Generate a model to review fabrication readiness.
                         </div>
@@ -241,27 +252,15 @@
                         <span id="generate-label">Generate model</span>
                         <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                     </button>
-                    <p class="workspace-note"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Inputs autosave on this device only.</p>
                 </div>
             </aside>
 
             <section class="view-pane" aria-labelledby="preview-heading">
                 <header class="stage-header">
-                    <div>
-                        <p class="eyebrow">03 · Inspect</p>
-                        <h2 id="preview-heading">Model workspace</h2>
-                    </div>
-                    <div class="stage-capabilities" aria-label="Preview capabilities">
-                        <span><i class="fa-solid fa-cube" aria-hidden="true"></i> Realtime 3D</span>
-                        <span><i class="fa-solid fa-lock" aria-hidden="true"></i> On-device</span>
-                    </div>
+                    <h2 id="preview-heading">Model workspace</h2>
                 </header>
 
                 <div id="model-view">
-                    <div class="stage-readout" aria-hidden="true">
-                        <span>RK / VIEW 01</span>
-                        <span>MM</span>
-                    </div>
                     <div class="view-toolbar" role="toolbar" aria-label="Model view controls">
                         <button type="button" id="view-fit" class="view-control" title="Fit model in view" aria-label="Fit model in view"><i class="fa-solid fa-up-right-and-down-left-from-center" aria-hidden="true"></i><span>Fit</span></button>
                         <button type="button" id="view-front" class="view-control" title="Front view" aria-label="Show front view" aria-pressed="false"><i class="fa-regular fa-square" aria-hidden="true"></i><span>Front</span></button>
@@ -275,7 +274,6 @@
                         <span class="axis-y">Y</span>
                     </div>
                     <div class="model-caption">
-                        <span class="caption-label">Active model</span>
                         <span id="model-description" aria-live="polite"></span>
                     </div>
                     <span id="model-generating" role="status" aria-live="polite" aria-atomic="true"></span>
@@ -283,16 +281,11 @@
 
                 <div class="stage-meta">
                     <p class="viewer-help"><i class="fa-solid fa-computer-mouse" aria-hidden="true"></i> Drag to orbit · Right-drag to pan · Scroll or pinch to zoom</p>
-                    <span class="privacy-note"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Geometry stays local</span>
                 </div>
 
                 <section class="export-dock" aria-labelledby="export-heading">
                     <div class="export-heading">
-                        <div>
-                            <p class="eyebrow">Output</p>
-                            <h3 id="export-heading">Export geometry</h3>
-                        </div>
-                        <p>Generate once, then choose the format for your workflow.</p>
+                        <h3 id="export-heading">Export</h3>
                     </div>
                     <div class="download-actions" aria-label="Model downloads">
                         <button type="button" id="save-stl" class="export-button" title="Download STL" disabled>

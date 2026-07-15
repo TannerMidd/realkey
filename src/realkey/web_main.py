@@ -30,6 +30,8 @@ share_generate = web_core.CheckboxElement(web.page["share-generate"])
 share_dialog = web_core.Element(web.page["share-dialog"])
 fabrication_profile_select = web_core.SelectElement(web.page["fabrication-profile"])
 fabrication_report = web_core.Element(web.page["fabrication-report"])
+fabrication_panel = web_core.Element(web.page["fabrication-panel"])
+fabrication_summary_status = web_core.Element(web.page["fabrication-summary-status"])
 fabrication_nozzle = web_core.StringValueElement(web.page["fabrication-nozzle"])
 fabrication_layer_height = web_core.StringValueElement(web.page["fabrication-layer-height"])
 fabrication_build_width = web_core.StringValueElement(web.page["fabrication-build-width"])
@@ -37,6 +39,9 @@ fabrication_build_depth = web_core.StringValueElement(web.page["fabrication-buil
 fabrication_build_height = web_core.StringValueElement(web.page["fabrication-build-height"])
 fabrication_wall_lines = web_core.StringValueElement(web.page["fabrication-wall-lines"])
 fabrication_profile_settings = web_core.Element(web.page["fabrication-profile-settings"])
+fabrication_geometry_settings = web_core.Element(web.page["fabrication-geometry-settings"])
+fabrication_minimum_feature = web_core.StringValueElement(web.page["fabrication-minimum-feature"])
+fabrication_minimum_wall = web_core.StringValueElement(web.page["fabrication-minimum-wall"])
 
 
 bg_worker = None
@@ -73,6 +78,7 @@ async def _remove_loading():
     model_generating.text = ""
     model_workspace._web_element.removeAttribute("aria-busy")  # type: ignore
     fabrication_report.text = "Generate a model to run profile-based fabrication checks."
+    _set_fabrication_summary("Not checked", "idle")
 
     try:
         await model_view.loadObject("resources/realkey.stl", 0.25, 0.95)
@@ -236,9 +242,13 @@ def on_model_input_changed():
     _latest_metrics = None
     _set_downloads_enabled(False)
     model_generating.text = ""
+    fabrication_minimum_feature.value = ""
+    fabrication_minimum_wall.value = ""
+    fabrication_geometry_settings._web_element.removeAttribute("open")  # type: ignore
     if had_artifact:
         model_description.text = "Inputs changed — generate again to refresh the model and exports."
     fabrication_report.text = "Inputs changed. Generate again to refresh fabrication checks."
+    _set_fabrication_summary("Generate to check", "idle")
     persist_workspace_state()
 
 
@@ -258,8 +268,9 @@ async def start_generation():
 
     try:
         profile_snapshot = _profile_from_controls()
+        _detailed_geometry_inputs()
     except ValueError as error:
-        info.text = f"Fabrication profile needs attention: {error}"
+        info.text = f"Fabrication inputs need attention: {error}"
         return
 
     selected_tab, _ = get_selected_tab()
@@ -309,13 +320,20 @@ async def start_generation():
         if job_revision == _generation_revision:
             info.text = f"Generation failed: {error}"
             fabrication_report.text = "No fabrication report is available for the failed job."
+            _set_fabrication_summary("Check unavailable", "error")
             _set_downloads_enabled(False)
     finally:
         if preview_url is not None:
             URL.revokeObjectURL(preview_url)
         if job_revision == _generation_revision:
             model_generating.text = ""
-            generate.enabled = True
+            try:
+                _profile_from_controls()
+                _detailed_geometry_inputs()
+            except ValueError:
+                generate.enabled = False
+            else:
+                get_selected_tab()[0].show()
             model_workspace._web_element.removeAttribute("aria-busy")  # type: ignore
 
 
@@ -446,7 +464,9 @@ def fabrication_profile_changed():
         persist_workspace_state()
         get_selected_tab()[0].show()
     except (KeyError, ValueError) as error:
-        fabrication_report.text = f"Profile needs attention: {error}"
+        fabrication_report.text = f"Fabrication settings need attention: {error}"
+        _set_fabrication_summary("Settings need input", "error")
+        fabrication_panel._web_element.setAttribute("open", "")  # type: ignore
         generate.enabled = False
 
 
@@ -459,7 +479,21 @@ def custom_profile_changed():
         persist_workspace_state()
         get_selected_tab()[0].show()
     except ValueError as error:
-        fabrication_report.text = f"Profile needs attention: {error}"
+        fabrication_report.text = f"Fabrication settings need attention: {error}"
+        _set_fabrication_summary("Settings need input", "error")
+        fabrication_panel._web_element.setAttribute("open", "")  # type: ignore
+        generate.enabled = False
+
+
+@when("input", "#fabrication-minimum-feature, #fabrication-minimum-wall")
+def detailed_geometry_changed():
+    try:
+        _detailed_geometry_inputs()
+        _render_fabrication_report(_profile_from_controls())
+        get_selected_tab()[0].show()
+    except ValueError as error:
+        fabrication_report.text = f"Measured geometry needs attention: {error}"
+        _set_fabrication_summary("Measurements need input", "error")
         generate.enabled = False
 
 
@@ -472,29 +506,74 @@ def _append_text(parent: Any, tag: str, value: str, class_name: str = "") -> Any
     return element
 
 
+def _set_fabrication_summary(label: str, state: str):
+    fabrication_summary_status.text = label
+    fabrication_summary_status._web_element.className = f"summary-status summary-status-{state}"  # type: ignore
+
+
+def _optional_measurement(control: web_core.StringValueElement) -> float | None:
+    raw_value = control.stripped_value
+    return None if raw_value == "" else float(raw_value)
+
+
+def _detailed_geometry_inputs() -> fabrication.DetailedGeometryInputs:
+    return fabrication.DetailedGeometryInputs(
+        minimum_feature_mm=_optional_measurement(fabrication_minimum_feature),
+        minimum_wall_mm=_optional_measurement(fabrication_minimum_wall),
+    )
+
+
 def _render_fabrication_report(profile: fabrication.PrinterProfile):
     report_root = fabrication_report._web_element
     report_root.replaceChildren()  # type: ignore
+    report_root.className = "fabrication-report report-state-idle"  # type: ignore
+    detailed_geometry = _detailed_geometry_inputs()
     if _latest_metrics is None:
         _append_text(report_root, "p", "Generate a model to run profile-based fabrication checks.")
+        _set_fabrication_summary("Not checked", "idle")
         return
 
     try:
         metrics = fabrication.ModelMetrics.from_dict(_latest_metrics)
-        report = fabrication.analyze_printability(metrics, profile)
+        report = fabrication.analyze_printability(
+            metrics,
+            profile,
+            detailed_geometry=detailed_geometry,
+        )
+        metrics = report.metrics
     except ValueError as error:
+        report_root.className = "fabrication-report report-state-error"  # type: ignore
         _append_text(report_root, "p", f"Fabrication metrics were invalid: {error}", "report-error")
+        _set_fabrication_summary("Check unavailable", "error")
+        fabrication_panel._web_element.setAttribute("open", "")  # type: ignore
         return
 
     status_labels = {
-        "no_issues_detected": "No profile-limit issues detected",
+        "no_issues_detected": "Basic checks passed",
         "review_recommended": "Review recommended",
         "outside_profile_limits": "Outside profile limits",
     }
+    summary_states = {
+        "no_issues_detected": "passed",
+        "review_recommended": "warning",
+        "outside_profile_limits": "error",
+    }
+    status_label = status_labels.get(report.status, report.status.replace("_", " ").title())
+    report_state = report.status
+    summary_label = status_label
+    summary_state = summary_states.get(report.status, "idle")
+    if _latest_export_warnings and report.status == "no_issues_detected":
+        report_state = "review_recommended"
+        summary_label = "Export needs attention"
+        summary_state = "warning"
+    report_root.className = f"fabrication-report report-state-{report_state}"  # type: ignore
+    _set_fabrication_summary(summary_label, summary_state)
+    if report.has_errors or report.has_warnings or _latest_export_warnings:
+        fabrication_panel._web_element.setAttribute("open", "")  # type: ignore
     _append_text(
         report_root,
         "h3",
-        status_labels.get(report.status, report.status.replace("_", " ").title()),
+        status_label,
         f"report-status status-{report.status}",
     )
     _append_text(
@@ -507,10 +586,30 @@ def _render_fabrication_report(profile: fabrication.PrinterProfile):
         "report-metrics",
     )
 
-    if report.issues:
+    detail_measurements = []
+    if metrics.minimum_feature_mm is not None:
+        detail_measurements.append(f"minimum feature {metrics.minimum_feature_mm:g} mm")
+    if metrics.minimum_wall_mm is not None:
+        detail_measurements.append(f"minimum wall {metrics.minimum_wall_mm:g} mm")
+    if detail_measurements:
+        _append_text(
+            report_root,
+            "p",
+            "Detail measurements · " + " · ".join(detail_measurements),
+            "report-metrics report-detail-metrics",
+        )
+
+    actionable_issues = [
+        issue for issue in report.issues if issue.severity is not fabrication.Severity.INFO
+    ]
+    coverage_issues = [
+        issue for issue in report.issues if issue.severity is fabrication.Severity.INFO
+    ]
+
+    if actionable_issues:
         issue_list = document.createElement("ul")  # type: ignore
         issue_list.className = "fabrication-issues"
-        for issue in report.issues:
+        for issue in actionable_issues:
             item = document.createElement("li")  # type: ignore
             item.className = f"fabrication-issue severity-{issue.severity.value}"
             _append_text(item, "strong", issue.message)
@@ -518,8 +617,20 @@ def _render_fabrication_report(profile: fabrication.PrinterProfile):
             issue_list.appendChild(item)
         report_root.appendChild(issue_list)
 
+    for issue in coverage_issues:
+        coverage = document.createElement("div")  # type: ignore
+        coverage.className = "report-coverage"
+        _append_text(coverage, "strong", "Analysis coverage")
+        _append_text(coverage, "span", f"{issue.message} {issue.recommendation}")
+        report_root.appendChild(coverage)
+
     for warning in _latest_export_warnings:
-        _append_text(report_root, "p", warning, "fabrication-issue severity-warning")
+        _append_text(
+            report_root,
+            "p",
+            f"{warning.rstrip('.')} — STL and STEP remain available.",
+            "fabrication-issue severity-warning",
+        )
     _append_text(report_root, "p", report.notice, "report-notice")
 
 
