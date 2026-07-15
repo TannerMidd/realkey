@@ -21,11 +21,12 @@ def get_selected_key() -> key.Key | None:
 
 def run_validation():
     selected_key = get_selected_key()
-    web_main.set_generation_context("blank" if len(bitting.stripped_value) == 0 else "key")
     if selected_key is None:
+        web_main.set_generation_context("key")
         web_main.info.text = ""
         web_main.generate.enabled = False
         return
+    web_main.set_generation_context("blank" if len(bitting.stripped_value) == 0 else "key")
     if len(bitting.stripped_value) == 0:
         web_main.info.text = ""
         web_main.generate.enabled = True
